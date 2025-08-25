@@ -1,0 +1,68 @@
+import axios from 'axios';
+import { User, Portfolio, Transaction, AddCoinRequest } from '../types';
+
+// Определяем базовый URL для API
+// В Telegram Web App используем прокси через React dev server
+// @ts-ignore
+const BACKEND_URL = window.__BACKEND_URL__ || process.env.REACT_APP_API_URL || '/api';
+
+const API_BASE_URL = BACKEND_URL;
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000, // 10 секунд таймаут
+});
+
+// Добавляем перехватчик ошибок
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error);
+    if (error.code === 'ECONNREFUSED') {
+      throw new Error('Сервер не отвечает. Убедитесь, что бэкенд запущен.');
+    }
+    if (error.response?.status === 404) {
+      throw new Error('API endpoint не найден.');
+    }
+    throw error;
+  }
+);
+
+
+
+export const apiService = {
+  // Получить статус сервера
+  getStatus: async () => {
+    const response = await api.get('/status');
+    return response.data;
+  },
+
+  // Получить пользователя
+  getUser: async (telegramId: number): Promise<User> => {
+    const response = await api.get(`/users/${telegramId}`);
+    return response.data;
+  },
+
+  // Получить портфель
+  getPortfolio: async (telegramId: number): Promise<Portfolio> => {
+    const response = await api.get(`/portfolio/${telegramId}`);
+    return response.data;
+  },
+
+  // Добавить монету
+  addCoin: async (data: AddCoinRequest): Promise<Transaction> => {
+    const response = await api.post('/portfolio/add-coin', data);
+    return response.data;
+  },
+
+  // Получить транзакции
+  getTransactions: async (telegramId: number): Promise<Transaction[]> => {
+    const response = await api.get(`/transactions/${telegramId}`);
+    return response.data;
+  },
+
+
+}; 

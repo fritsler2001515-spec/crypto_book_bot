@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="CryptoBook Bot - управление криптопортфелем"
+    />
+    
+    <!-- Telegram Web App мета-теги -->
+    <meta name="telegram-web-app-ready" content="true" />
+    <meta name="telegram-web-app-version" content="6.0" />
+    <meta name="telegram-web-app-platform" content="ios" />
+    
+    <!-- Telegram Web App скрипт -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Предотвращение ошибок TelegramGameProxy -->
+    <script>
+      // Предотвращаем ошибки TelegramGameProxy
+      if (!window.TelegramGameProxy) {
+        window.TelegramGameProxy = {
+          receiveEvent: function() {},
+          receiveError: function() {},
+        };
+      }
+      
+      // Глобальная переменная для URL бэкенда
+      // В Telegram Web App используем прокси через React dev server
+      window.__BACKEND_URL__ = 'http://localhost:8001/api';
+    </script>
+    
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <title>CryptoBook Bot</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
