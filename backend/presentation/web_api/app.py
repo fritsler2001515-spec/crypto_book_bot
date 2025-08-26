@@ -139,6 +139,19 @@ async def portfolio_options(telegram_id: int):
         }
     )
 
+@api_router.options("/portfolio/add-coin")
+async def add_coin_options():
+    """OPTIONS запрос для CORS preflight добавления монеты"""
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400"
+        }
+    )
+
 @api_router.get("/portfolio/{telegram_id}")
 async def get_portfolio(
     telegram_id: int, 
@@ -192,12 +205,34 @@ async def get_portfolio(
 @api_router.post("/portfolio/add-coin", response_model=TransactionResponse)
 async def add_coin_to_portfolio(
     request: AddCoinRequest,
+    response: Response,
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
     portfolio_repo: SQLAlchemyPortfolioRepository = Depends(get_portfolio_repository),
     transaction_repo: SQLAlchemyTransactionRepository = Depends(get_transaction_repository)
 ):
     """Добавить монету в портфель"""
+    # Добавляем CORS заголовки
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    
     try:
+        # Логируем запрос для отладки
+        print(f"Получен запрос на добавление монеты: {request}")
+        
+        # Проверяем, существует ли пользователь, если нет - создаем
+        user = await user_repo.get_by_telegram_id(request.telegram_id)
+        if not user:
+            print(f"Создаем нового пользователя с telegram_id: {request.telegram_id}")
+            from domain.entities.user import User
+            from decimal import Decimal
+            new_user = User(
+                telegram_id=request.telegram_id,
+                balance=Decimal('10000.00')
+            )
+            user = await user_repo.create(new_user)
+            print(f"Создан пользователь с ID: {user.id}")
+        
         use_case = AddCoinToPortfolioUseCase(user_repo, portfolio_repo, transaction_repo)
         
         success = await use_case.execute(
@@ -221,6 +256,9 @@ async def add_coin_to_portfolio(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"Ошибка в add_coin_to_portfolio: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Ошибка при добавлении монеты: {str(e)}")
 
 @api_router.get("/transactions/{telegram_id}", response_model=List[TransactionResponse])
