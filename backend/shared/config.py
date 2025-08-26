@@ -11,7 +11,10 @@ class Settings(BaseSettings):
     # Telegram Bot
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "your_telegram_bot_token_here")
     
-    # Database (PostgreSQL) - используем существующие настройки
+    # Database (PostgreSQL) - поддержка DATABASE_URL для production
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+    
+    # Database fallback настройки для development
     DB_HOST: str = os.getenv("DB_HOST", "127.0.0.1")
     DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
     DB_NAME: str = os.getenv("DB_NAME", "postgres")
@@ -26,10 +29,14 @@ class Settings(BaseSettings):
     
     @property
     def DB_URL(self) -> str:
+        if self.DATABASE_URL:
+            return self.DATABASE_URL.replace("postgresql://", "postgresql://", 1)
         return f"postgresql://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     @property
     def ASYNC_DB_URL(self) -> str:
+        if self.DATABASE_URL:
+            return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     # API
