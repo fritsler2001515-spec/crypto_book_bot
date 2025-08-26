@@ -5,7 +5,7 @@ import { User, Portfolio, Transaction, AddCoinRequest, CoinData } from '../types
 const isDevelopment = process.env.NODE_ENV === 'development';
 const BACKEND_URL = isDevelopment 
   ? '' // В development используем прокси (пустая строка = тот же домен)
-  : process.env.REACT_APP_API_URL || 'https://crypto-book-bot.onrender.com'; // В production - Render URL
+  : process.env.REACT_APP_API_URL || 'https://crypto-book-bot.onrender.com/api'; // В production - Render URL с /api
 
 const API_BASE_URL = BACKEND_URL;
 
