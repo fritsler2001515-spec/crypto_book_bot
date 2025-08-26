@@ -114,24 +114,40 @@ const AddCoin: React.FC = () => {
         return (
           <TextField
             fullWidth
-            type="number"
             label="Количество монет"
-            value={formData.quantity}
-            onChange={(e) => handleInputChange('quantity', parseFloat(e.target.value) || 0)}
+            type="text"
+            inputProps={{
+              pattern: "[0-9]*[.,]?[0-9]*",
+              inputMode: "decimal"
+            }}
+            value={formData.quantity === 0 ? '' : formData.quantity.toString()}
+            onChange={(e) => {
+              const value = e.target.value.replace(',', '.');
+              const numValue = parseFloat(value);
+              handleInputChange('quantity', isNaN(numValue) ? 0 : numValue);
+            }}
             placeholder="0.5"
-            helperText="Введите количество купленных монет"
+            helperText="Введите количество купленных монет (можно с точкой или запятой)"
           />
         );
       case 3:
         return (
           <TextField
             fullWidth
-            type="number"
             label="Цена покупки (USD)"
-            value={formData.price}
-            onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-            placeholder="50000"
-            helperText="Введите цену за одну монету в долларах"
+            type="text"
+            inputProps={{
+              pattern: "[0-9]*[.,]?[0-9]*",
+              inputMode: "decimal"
+            }}
+            value={formData.price === 0 ? '' : formData.price.toString()}
+            onChange={(e) => {
+              const value = e.target.value.replace(',', '.');
+              const numValue = parseFloat(value);
+              handleInputChange('price', isNaN(numValue) ? 0 : numValue);
+            }}
+            placeholder="50000.5"
+            helperText="Введите цену за одну монету в долларах (можно с точкой или запятой)"
           />
         );
       default:

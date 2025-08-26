@@ -28,7 +28,7 @@ def get_main_keyboard():
     """Получить главную клавиатуру с веб-приложением"""
     
     # URL задеплоенного фронтенда на Vercel
-    webapp_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
+    webapp_url = "https://crypto-book-bot.vercel.app"
     
     keyboard = [
         [KeyboardButton(text="📊 Портфель"), KeyboardButton(text="💰 Добавить монету")],
@@ -52,7 +52,7 @@ async def cmd_start(message: Message):
 async def cmd_webapp(message: Message):
     """Отправить ссылку на веб-приложение"""
     # URL задеплоенного фронтенда на Vercel
-    webapp_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
+    webapp_url = "https://crypto-book-bot.vercel.app"
     
     await message.answer(
         f"🌐 Ссылка на ваше мини-приложение:\n\n"
@@ -68,7 +68,7 @@ async def cmd_app(message: Message):
     
     # Получаем ngrok URL
     # URL задеплоенного фронтенда на Vercel
-    current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
+    current_url = "https://crypto-book-bot.vercel.app"
     
     # Создаем инлайн клавиатуру с Web App кнопкой
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -94,7 +94,7 @@ async def cmd_url(message: Message):
     
     # Получаем ngrok URL
     # URL задеплоенного фронтенда на Vercel
-    current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
+    current_url = "https://crypto-book-bot.vercel.app"
     await message.answer(
         f"🔗 Текущий URL веб-приложения:\n\n"
         f"🌐 {current_url}\n\n"
@@ -291,7 +291,7 @@ async def get_app_link(message: Message):
     """Получить ссылку на мини-приложение"""
     # Получаем ngrok URL
     # URL задеплоенного фронтенда на Vercel
-    current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
+    current_url = "https://crypto-book-bot.vercel.app"
     
     # Создаем инлайн клавиатуру с Web App кнопкой
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton

@@ -240,7 +240,8 @@ async def get_transactions(
     try:
         user = await user_repo.get_by_telegram_id(telegram_id)
         if not user:
-            raise HTTPException(status_code=404, detail="Пользователь не найден")
+            # Если пользователя нет, возвращаем пустой список вместо 404
+            return []
         
         transactions = await transaction_repo.get_user_transactions(user.id)
         return [

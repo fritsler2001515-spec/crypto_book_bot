@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     CHAT_IDS: str = os.getenv("CHAT_IDS", "")
     
     # Web App URL
-    WEBAPP_URL: str = os.getenv("WEBAPP_URL", "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app")
+    WEBAPP_URL: str = os.getenv("WEBAPP_URL", "https://crypto-book-bot.vercel.app")
     
     @property
     def DB_URL(self) -> str:
