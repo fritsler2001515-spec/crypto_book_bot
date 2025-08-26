@@ -67,10 +67,6 @@ async def cmd_app(message: Message):
     import requests
     
     # Получаем ngrok URL
-    try:
-        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-        tunnels = response.json()["tunnels"]
-        
     # URL задеплоенного фронтенда на Vercel
     current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     
@@ -97,10 +93,6 @@ async def cmd_url(message: Message):
     import requests
     
     # Получаем ngrok URL
-    try:
-        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-        tunnels = response.json()["tunnels"]
-        
     # URL задеплоенного фронтенда на Vercel
     current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     await message.answer(
@@ -298,10 +290,6 @@ async def show_analytics(message: Message):
 async def get_app_link(message: Message):
     """Получить ссылку на мини-приложение"""
     # Получаем ngrok URL
-    try:
-        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-        tunnels = response.json()["tunnels"]
-        
     # URL задеплоенного фронтенда на Vercel
     current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     
