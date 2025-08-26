@@ -46,12 +46,14 @@ app.add_middleware(
 # Обработка preflight OPTIONS запросов
 @app.options("/{full_path:path}")
 async def options_handler(request: Request):
+    """Глобальный обработчик OPTIONS для CORS preflight"""
+    print(f"OPTIONS запрос для: {request.url}")
     return JSONResponse(
         content={},
         headers={
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, X-Requested-With",
             "Access-Control-Max-Age": "86400"
         }
     )
@@ -139,18 +141,7 @@ async def portfolio_options(telegram_id: int):
         }
     )
 
-@api_router.options("/portfolio/add-coin")
-async def add_coin_options():
-    """OPTIONS запрос для CORS preflight добавления монеты"""
-    return JSONResponse(
-        content={},
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "86400"
-        }
-    )
+
 
 @api_router.get("/portfolio/{telegram_id}")
 async def get_portfolio(
