@@ -37,26 +37,11 @@ app.include_router(api_router)
 # Настройка CORS для решения проблем с фронтендом
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
-    allow_credentials=True,
+    allow_origins=["*"],  # В production лучше указать конкретные домены
+    allow_credentials=False,  # Отключаем credentials для упрощения
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
-
-# Обработка preflight OPTIONS запросов
-@app.options("/{full_path:path}")
-async def options_handler(request: Request):
-    """Глобальный обработчик OPTIONS для CORS preflight"""
-    print(f"OPTIONS запрос для: {request.url}")
-    return JSONResponse(
-        content={},
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept, X-Requested-With",
-            "Access-Control-Max-Age": "86400"
-        }
-    )
 
 @app.get("/health")
 async def health_check():
@@ -128,34 +113,17 @@ async def get_user(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
-@api_router.options("/portfolio/{telegram_id}")
-async def portfolio_options(telegram_id: int):
-    """OPTIONS запрос для CORS preflight"""
-    return JSONResponse(
-        content={},
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "86400"
-        }
-    )
+
 
 
 
 @api_router.get("/portfolio/{telegram_id}")
 async def get_portfolio(
     telegram_id: int, 
-    response: Response,
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
     portfolio_repo: SQLAlchemyPortfolioRepository = Depends(get_portfolio_repository)
 ):
     """Получить портфель пользователя с текущими ценами"""
-    
-    # Добавляем CORS заголовки
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
         # Используем use case для получения реальных данных
@@ -196,16 +164,11 @@ async def get_portfolio(
 @api_router.post("/portfolio/add-coin", response_model=TransactionResponse)
 async def add_coin_to_portfolio(
     request: AddCoinRequest,
-    response: Response,
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
     portfolio_repo: SQLAlchemyPortfolioRepository = Depends(get_portfolio_repository),
     transaction_repo: SQLAlchemyTransactionRepository = Depends(get_transaction_repository)
 ):
     """Добавить монету в портфель"""
-    # Добавляем CORS заголовки
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
         # Логируем запрос для отладки
@@ -255,16 +218,10 @@ async def add_coin_to_portfolio(
 @api_router.get("/transactions/{telegram_id}", response_model=List[TransactionResponse])
 async def get_transactions(
     telegram_id: int,
-    response: Response,
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
     transaction_repo: SQLAlchemyTransactionRepository = Depends(get_transaction_repository)
 ):
     """Получить транзакции пользователя"""
-    
-    # Добавляем CORS заголовки
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
         user = await user_repo.get_by_telegram_id(telegram_id)
