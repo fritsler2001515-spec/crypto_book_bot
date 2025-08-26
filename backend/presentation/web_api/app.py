@@ -43,12 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@api_router.get("/health")
 async def health_check():
     """Проверка здоровья API"""
     return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
 
-@app.get("/status")
+@api_router.get("/status")
 async def api_status():
     """Проверка статуса API"""
     return {"status": "success", "server": "CryptoBot Backend", "version": "1.0.0", "uptime": "running"}
