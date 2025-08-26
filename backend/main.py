@@ -22,14 +22,21 @@ async def lifespan(app: FastAPI):
     init_db()
     print("✅ База данных инициализирована")
     
-    # Создание и настройка бота
-    bot = Bot(token=settings.BOT_TOKEN)
-    dp = Dispatcher(storage=MemoryStorage())
-    dp.include_router(telegram_router)
-    
-    # Запуск бота в фоновом режиме
-    asyncio.create_task(dp.start_polling(bot))
-    print("✅ Telegram бот запущен")
+    # Создание и настройка бота (только если токен валидный)
+    if settings.BOT_TOKEN and settings.BOT_TOKEN != "your_telegram_bot_token_here":
+        try:
+            bot = Bot(token=settings.BOT_TOKEN)
+            dp = Dispatcher(storage=MemoryStorage())
+            dp.include_router(telegram_router)
+            
+            # Запуск бота в фоновом режиме
+            asyncio.create_task(dp.start_polling(bot))
+            print("✅ Telegram бот запущен")
+        except Exception as e:
+            print(f"⚠️ Telegram бот не запущен: {e}")
+            print("📱 Работает только веб-версия")
+    else:
+        print("📱 Telegram бот отключен - работает только веб-версия")
     
     yield
     
