@@ -26,19 +26,9 @@ class PortfolioStates(StatesGroup):
 # Клавиатуры
 def get_main_keyboard():
     """Получить главную клавиатуру с веб-приложением"""
-    import requests
     
-    # Получаем ngrok URL для фронтенда
-    try:
-        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-        tunnels = response.json()["tunnels"]
-        
-        if tunnels:
-            webapp_url = tunnels[0]["public_url"]
-        else:
-            webapp_url = "https://your-ngrok-url.ngrok-free.app"
-    except:
-        webapp_url = "https://your-ngrok-url.ngrok-free.app"
+    # URL задеплоенного фронтенда на Vercel
+    webapp_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     
     keyboard = [
         [KeyboardButton(text="📊 Портфель"), KeyboardButton(text="💰 Добавить монету")],
@@ -61,17 +51,8 @@ async def cmd_start(message: Message):
 @router.message(Command("webapp"))
 async def cmd_webapp(message: Message):
     """Отправить ссылку на веб-приложение"""
-    # Получаем ngrok URL
-    try:
-        response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
-        tunnels = response.json()["tunnels"]
-        
-        if tunnels:
-            webapp_url = tunnels[0]["public_url"]
-        else:
-            webapp_url = "https://your-ngrok-url.ngrok-free.app"
-    except:
-        webapp_url = "https://your-ngrok-url.ngrok-free.app"
+    # URL задеплоенного фронтенда на Vercel
+    webapp_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     
     await message.answer(
         f"🌐 Ссылка на ваше мини-приложение:\n\n"
@@ -90,12 +71,8 @@ async def cmd_app(message: Message):
         response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
         tunnels = response.json()["tunnels"]
         
-        if tunnels:
-            current_url = tunnels[0]["public_url"]
-        else:
-            current_url = "https://your-ngrok-url.ngrok-free.app"
-    except:
-        current_url = "https://your-ngrok-url.ngrok-free.app"
+    # URL задеплоенного фронтенда на Vercel
+    current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     
     # Создаем инлайн клавиатуру с Web App кнопкой
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -124,12 +101,8 @@ async def cmd_url(message: Message):
         response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
         tunnels = response.json()["tunnels"]
         
-        if tunnels:
-            current_url = tunnels[0]["public_url"]
-        else:
-            current_url = "https://your-ngrok-url.ngrok-free.app"
-    except:
-        current_url = "https://your-ngrok-url.ngrok-free.app"
+    # URL задеплоенного фронтенда на Vercel
+    current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     await message.answer(
         f"🔗 Текущий URL веб-приложения:\n\n"
         f"🌐 {current_url}\n\n"
@@ -329,12 +302,8 @@ async def get_app_link(message: Message):
         response = requests.get("http://localhost:4040/api/tunnels", timeout=5)
         tunnels = response.json()["tunnels"]
         
-        if tunnels:
-            current_url = tunnels[0]["public_url"]
-        else:
-            current_url = "https://your-ngrok-url.ngrok-free.app"
-    except:
-        current_url = "https://your-ngrok-url.ngrok-free.app"
+    # URL задеплоенного фронтенда на Vercel
+    current_url = "https://crypto-book-9q9almyyd-mister23s-projects.vercel.app"
     
     # Создаем инлайн клавиатуру с Web App кнопкой
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
