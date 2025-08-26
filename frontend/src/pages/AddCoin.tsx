@@ -30,6 +30,10 @@ const AddCoin: React.FC = () => {
     quantity: 0,
     price: 0,
   });
+  
+  // Строковые значения для полей ввода чисел
+  const [quantityInput, setQuantityInput] = useState('');
+  const [priceInput, setPriceInput] = useState('');
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -62,6 +66,8 @@ const AddCoin: React.FC = () => {
         quantity: 0,
         price: 0,
       });
+      setQuantityInput('');
+      setPriceInput('');
       setActiveStep(0);
     } catch (err) {
       setError('Ошибка при добавлении монеты');
@@ -71,6 +77,12 @@ const AddCoin: React.FC = () => {
     }
   };
 
+  const parseNumberInput = (input: string): number => {
+    const cleaned = input.replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const isStepValid = (step: number) => {
     switch (step) {
       case 0:
@@ -78,9 +90,9 @@ const AddCoin: React.FC = () => {
       case 1:
         return formData.name.trim().length > 0;
       case 2:
-        return formData.quantity > 0;
+        return quantityInput.trim().length > 0 && parseNumberInput(quantityInput) > 0;
       case 3:
-        return formData.price > 0;
+        return priceInput.trim().length > 0 && parseNumberInput(priceInput) > 0;
       default:
         return false;
     }
@@ -117,14 +129,17 @@ const AddCoin: React.FC = () => {
             label="Количество монет"
             type="text"
             inputProps={{
-              pattern: "[0-9]*[.,]?[0-9]*",
               inputMode: "decimal"
             }}
-            value={formData.quantity === 0 ? '' : formData.quantity.toString()}
+            value={quantityInput}
             onChange={(e) => {
-              const value = e.target.value.replace(',', '.');
-              const numValue = parseFloat(value);
-              handleInputChange('quantity', isNaN(numValue) ? 0 : numValue);
+              const value = e.target.value;
+              // Разрешаем только цифры, точку и запятую
+              if (/^[0-9]*[.,]?[0-9]*$/.test(value) || value === '') {
+                setQuantityInput(value);
+                const numValue = parseNumberInput(value);
+                handleInputChange('quantity', numValue);
+              }
             }}
             placeholder="0.5"
             helperText="Введите количество купленных монет (можно с точкой или запятой)"
@@ -137,14 +152,17 @@ const AddCoin: React.FC = () => {
             label="Цена покупки (USD)"
             type="text"
             inputProps={{
-              pattern: "[0-9]*[.,]?[0-9]*",
               inputMode: "decimal"
             }}
-            value={formData.price === 0 ? '' : formData.price.toString()}
+            value={priceInput}
             onChange={(e) => {
-              const value = e.target.value.replace(',', '.');
-              const numValue = parseFloat(value);
-              handleInputChange('price', isNaN(numValue) ? 0 : numValue);
+              const value = e.target.value;
+              // Разрешаем только цифры, точку и запятую
+              if (/^[0-9]*[.,]?[0-9]*$/.test(value) || value === '') {
+                setPriceInput(value);
+                const numValue = parseNumberInput(value);
+                handleInputChange('price', numValue);
+              }
             }}
             placeholder="50000.5"
             helperText="Введите цену за одну монету в долларах (можно с точкой или запятой)"
@@ -238,12 +256,12 @@ const AddCoin: React.FC = () => {
               </Box>
               <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <Typography variant="body2" color="textSecondary">
-                  Количество: {formData.quantity || '—'}
+                  Количество: {quantityInput || '—'}
                 </Typography>
               </Box>
               <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
                 <Typography variant="body2" color="textSecondary">
-                  Цена: ${formData.price || '—'}
+                  Цена: ${priceInput || '—'}
                 </Typography>
               </Box>
               {formData.quantity > 0 && formData.price > 0 && (
