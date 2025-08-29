@@ -1,6 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, APIRouter, Response
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -34,33 +32,7 @@ api_router = APIRouter()
 # Подключаем API роутер
 app.include_router(api_router)
 
-# Настройка CORS для решения проблем с фронтендом
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "*",  # Разрешаем все домены для упрощения
-        "https://crypto-book-bot.vercel.app",  # Frontend
-        "https://web.telegram.org",  # Telegram Web App
-        "https://telegram.org",  # Telegram
-    ],
-    allow_credentials=False,  # Отключаем credentials для упрощения
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=[
-        "*",
-        "Content-Type",
-        "Authorization", 
-        "X-Requested-With",
-        "Accept",
-        "Origin",
-        "User-Agent",
-        "DNT",
-        "Cache-Control",
-        "X-Mx-ReqToken",
-        "Keep-Alive",
-        "X-Requested-With",
-        "If-Modified-Since",
-    ],
-)
+# CORS middleware перенесен в main.py
 
 @api_router.get("/health")
 async def health_check():

@@ -51,6 +51,34 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Настройка CORS для решения проблем с фронтендом
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "*",  # Разрешаем все домены для упрощения
+        "https://crypto-book-bot.vercel.app",  # Frontend
+        "https://web.telegram.org",  # Telegram Web App
+        "https://telegram.org",  # Telegram
+    ],
+    allow_credentials=False,  # Отключаем credentials для упрощения
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "*",
+        "Content-Type",
+        "Authorization", 
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "User-Agent",
+        "DNT",
+        "Cache-Control",
+        "X-Mx-ReqToken",
+        "Keep-Alive",
+        "If-Modified-Since",
+    ],
+)
+
 # Подключаем роутер напрямую
 from presentation.web_api.app import api_router
 app.include_router(api_router, prefix="/api")
