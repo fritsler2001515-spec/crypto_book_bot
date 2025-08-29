@@ -72,69 +72,65 @@ const Portfolio: React.FC = () => {
       </Typography>
 
       {/* Общая статистика */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Общая стоимость
+      <Card sx={{ 
+        bgcolor: 'background.paper', 
+        mb: 4, 
+        borderRadius: 3,
+        overflow: 'hidden'
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          {/* Общая стоимость */}
+          <Box sx={{ mb: 3 }}>
+            <Typography color="textSecondary" gutterBottom>
+              Общая стоимость
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              ${totalValue.toFixed(2)}
+            </Typography>
+          </Box>
+
+          {/* Текущая стоимость */}
+          <Box sx={{ mb: 3 }}>
+            <Typography color="textSecondary" gutterBottom>
+              Текущая стоимость
+            </Typography>
+            <Typography variant="h4" sx={{ 
+              fontWeight: 'bold', 
+              color: totalCurrentValue > 0 ? 'success.main' : 'text.secondary' 
+            }}>
+              ${totalCurrentValue.toFixed(2)}
+            </Typography>
+          </Box>
+
+          {/* Прибыль/Убыток */}
+          <Box sx={{ mb: 3 }}>
+            <Typography color="textSecondary" gutterBottom>
+              Прибыль/Убыток
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 'bold', 
+                color: totalProfit >= 0 ? 'success.main' : 'error.main' 
+              }}>
+                {totalProfit >= 0 ? '📈' : '📉'} ${Math.abs(totalProfit).toFixed(2)}
               </Typography>
-              <Typography variant="h5" color="primary.main">
-                ${totalValue.toFixed(2)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Текущая стоимость
-              </Typography>
-              <Typography variant="h5" color="secondary.main">
-                ${totalCurrentValue.toFixed(2)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Прибыль/Убыток
-              </Typography>
-              <Box display="flex" alignItems="center" gap={1}>
-                {totalProfit >= 0 ? (
-                  <TrendingUp color="success" />
-                ) : (
-                  <TrendingDown color="error" />
-                )}
-                <Typography
-                  variant="h5"
-                  color={totalProfit >= 0 ? 'success.main' : 'error.main'}
-                >
-                  ${totalProfit.toFixed(2)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Процент изменения
-              </Typography>
-              <Typography
-                variant="h5"
-                color={profitPercentage >= 0 ? 'success.main' : 'error.main'}
-              >
-                {profitPercentage.toFixed(2)}%
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+            </Box>
+          </Box>
+
+          {/* Процент изменения */}
+          <Box>
+            <Typography color="textSecondary" gutterBottom>
+              Процент изменения
+            </Typography>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 'bold', 
+              color: profitPercentage >= 0 ? 'success.main' : 'error.main' 
+            }}>
+              {profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(2)}%
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Таблица портфеля */}
       <Card sx={{ bgcolor: 'background.paper' }}>

@@ -13,12 +13,39 @@ class GetUserPortfolioUseCase:
         self.portfolio_repo = portfolio_repo
     
     async def execute(self, telegram_id: int) -> Optional[List[UserPortfolio]]:
-        """Получить портфель пользователя"""
+        """Получить портфель пользователя с обновленными ценами"""
         user = await self.user_repo.get_by_telegram_id(telegram_id)
         if not user:
             return None
         
-        return await self.portfolio_repo.get_user_portfolio(user.id)
+        portfolio_items = await self.portfolio_repo.get_user_portfolio(user.id)
+        
+        # Обновляем текущие цены через CoinGecko API
+        if portfolio_items:
+            try:
+                from infrastructure.external_apis.coin_gecko_api import CoinGeckoAPI
+                coin_api = CoinGeckoAPI()
+                
+                # Получаем символы всех монет в портфеле
+                symbols = [item.symbol.lower() for item in portfolio_items]
+                
+                # Получаем текущие цены
+                current_prices = await coin_api.get_current_prices(symbols)
+                
+                # Обновляем цены в портфеле
+                for item in portfolio_items:
+                    symbol_lower = item.symbol.lower()
+                    if symbol_lower in current_prices:
+                        from decimal import Decimal
+                        item.current_price = Decimal(str(current_prices[symbol_lower]))
+                        # Обновляем в базе данных
+                        await self.portfolio_repo.update_portfolio_item(item)
+                        
+            except Exception as e:
+                print(f"Ошибка при обновлении цен: {e}")
+                # Продолжаем работу даже если не удалось обновить цены
+        
+        return portfolio_items
 
 
 class AddCoinToPortfolioUseCase:

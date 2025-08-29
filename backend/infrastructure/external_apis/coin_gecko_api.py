@@ -199,6 +199,77 @@ class CoinGeckoAPI:
                 results[coin_name] = result
         
         return results
+    
+    async def get_current_prices(self, symbols: List[str]) -> Dict[str, float]:
+        """Получить текущие цены монет по символам (BTC, ETH, etc.)"""
+        try:
+            # Маппинг символов в ID CoinGecko
+            symbol_to_id = {
+                'btc': 'bitcoin',
+                'eth': 'ethereum', 
+                'usdt': 'tether',
+                'bnb': 'binancecoin',
+                'sol': 'solana',
+                'xrp': 'ripple',
+                'usdc': 'usd-coin',
+                'ada': 'cardano',
+                'doge': 'dogecoin',
+                'trx': 'tron',
+                'avax': 'avalanche-2',
+                'dot': 'polkadot',
+                'matic': 'matic-network',
+                'ltc': 'litecoin',
+                'link': 'chainlink',
+            }
+            
+            # Преобразуем символы в ID
+            coin_ids = []
+            for symbol in symbols:
+                symbol_lower = symbol.lower()
+                if symbol_lower in symbol_to_id:
+                    coin_ids.append(symbol_to_id[symbol_lower])
+            
+            if not coin_ids:
+                return {}
+            
+            # Делаем запрос к API
+            url = f"{self.base_url}/simple/price"
+            params = {
+                'ids': ','.join(coin_ids),
+                'vs_currencies': 'usd'
+            }
+            
+            # Добавляем задержку для избежания rate limit
+            await asyncio.sleep(0.1)
+            
+            if not self.session:
+                connector = aiohttp.TCPConnector(ssl=False)
+                async with aiohttp.ClientSession(connector=connector) as session:
+                    async with session.get(url, params=params) as response:
+                        if response.status == 429:  # Rate limit
+                            print("Rate limit превышен. Ожидание 10 секунд...")
+                            await asyncio.sleep(10)
+                            return {}
+                        
+                        if response.status == 200:
+                            data = await response.json()
+                            
+                            # Преобразуем обратно в символы
+                            result = {}
+                            id_to_symbol = {v: k for k, v in symbol_to_id.items()}
+                            
+                            for coin_id, price_data in data.items():
+                                if coin_id in id_to_symbol:
+                                    symbol = id_to_symbol[coin_id]
+                                    result[symbol] = price_data.get('usd', 0)
+                            
+                            return result
+            
+            return {}
+            
+        except Exception as e:
+            print(f"Ошибка при получении цен: {e}")
+            return {}
 
 
 # Синхронная версия для обратной совместимости
