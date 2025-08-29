@@ -172,6 +172,7 @@ async def add_coin_to_portfolio(
             from domain.entities.user import User
             from decimal import Decimal
             new_user = User(
+                id=None,  # Явно указываем None для нового пользователя
                 telegram_id=request.telegram_id,
                 balance=Decimal('10000.00')
             )
