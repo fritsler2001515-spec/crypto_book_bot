@@ -20,29 +20,55 @@ class GetUserPortfolioUseCase:
         
         portfolio_items = await self.portfolio_repo.get_user_portfolio(user.id)
         
-        # Обновляем текущие цены через CoinGecko API
+        # Обновляем текущие цены через CoinGecko API (только если есть монеты и цены устарели)
         if portfolio_items:
             try:
                 from infrastructure.external_apis.coin_gecko_api import CoinGeckoAPI
-                coin_api = CoinGeckoAPI()
+                from decimal import Decimal
+                from datetime import datetime, timedelta
                 
-                # Получаем символы всех монет в портфеле
-                symbols = [item.symbol.lower() for item in portfolio_items]
-                
-                # Получаем текущие цены
-                current_prices = await coin_api.get_current_prices(symbols)
-                
-                # Обновляем цены в портфеле
+                # Проверяем, нужно ли обновлять цены (если прошло более 5 минут)
+                need_update = False
                 for item in portfolio_items:
-                    symbol_lower = item.symbol.lower()
-                    if symbol_lower in current_prices:
-                        from decimal import Decimal
-                        item.current_price = Decimal(str(current_prices[symbol_lower]))
-                        # Обновляем в базе данных
-                        await self.portfolio_repo.update_portfolio_item(item)
+                    if not item.last_updated or (datetime.utcnow() - item.last_updated) > timedelta(minutes=5):
+                        need_update = True
+                        break
+                
+                if need_update:
+                    print(f"Обновляем цены для {len(portfolio_items)} монет")
+                    
+                    coin_api = CoinGeckoAPI()
+                    
+                    # Получаем символы всех монет в портфеле
+                    symbols = [item.symbol for item in portfolio_items]
+                    print(f"Символы для обновления: {symbols}")
+                    
+                    # Получаем текущие цены
+                    current_prices = await coin_api.get_current_prices(symbols)
+                    print(f"Получены цены: {current_prices}")
+                    
+                    # Обновляем цены в портфеле
+                    updated_count = 0
+                    for item in portfolio_items:
+                        symbol_lower = item.symbol.lower()
+                        if symbol_lower in current_prices and current_prices[symbol_lower] > 0:
+                            old_price = float(item.current_price)
+                            item.current_price = Decimal(str(current_prices[symbol_lower]))
+                            item.last_updated = datetime.utcnow()
+                            print(f"Обновляем цену {item.symbol}: {old_price} -> {current_prices[symbol_lower]}")
+                            
+                            # Обновляем в базе данных
+                            await self.portfolio_repo.update_portfolio_item(item)
+                            updated_count += 1
+                    
+                    print(f"Обновлено цен в БД: {updated_count}")
+                else:
+                    print("Цены актуальны, обновление не требуется")
                         
             except Exception as e:
                 print(f"Ошибка при обновлении цен: {e}")
+                import traceback
+                traceback.print_exc()
                 # Продолжаем работу даже если не удалось обновить цены
         
         return portfolio_items
