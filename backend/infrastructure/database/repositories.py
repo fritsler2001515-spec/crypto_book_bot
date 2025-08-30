@@ -4,9 +4,9 @@ from sqlalchemy import select
 from decimal import Decimal
 from datetime import datetime
 
-from domain.entities.user import User as UserEntity, UserPortfolio as PortfolioEntity, CoinTransaction as TransactionEntity
+from domain.entities.user import User as UserEntity, UserPortfolio as PortfolioEntity, CoinTransaction as TransactionEntity, TransactionType
 from domain.repositories.user_repository import UserRepository, PortfolioRepository, TransactionRepository
-from .models import User, UserPortfolio, CoinTransaction
+from .models import User, UserPortfolio, CoinTransaction, TransactionType as DBTransactionType
 
 class SQLAlchemyUserRepository(UserRepository):
     def __init__(self, session: AsyncSession):
@@ -166,6 +166,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.session = session
 
     async def create_transaction(self, transaction: TransactionEntity) -> TransactionEntity:
+        # Преобразуем доменный тип в тип БД
+        db_transaction_type = DBTransactionType.BUY if transaction.transaction_type == TransactionType.BUY else DBTransactionType.SELL
+        
         db_transaction = CoinTransaction(
             user_id=transaction.user_id,
             symbol=transaction.symbol,
@@ -173,11 +176,15 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             quantity=transaction.quantity,
             price=transaction.price,
             total_spent=transaction.total_spent,
+            transaction_type=db_transaction_type,
             timestamp=transaction.timestamp or datetime.utcnow()
         )
         self.session.add(db_transaction)
         await self.session.commit()
         await self.session.refresh(db_transaction)
+        # Преобразуем тип БД обратно в доменный тип
+        domain_transaction_type = TransactionType.BUY if db_transaction.transaction_type == DBTransactionType.BUY else TransactionType.SELL
+        
         return TransactionEntity(
             id=db_transaction.id,
             user_id=db_transaction.user_id,
@@ -186,6 +193,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
             quantity=db_transaction.quantity,
             price=db_transaction.price,
             total_spent=db_transaction.total_spent,
+            transaction_type=domain_transaction_type,
             timestamp=db_transaction.timestamp
         )
 
@@ -204,6 +212,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 quantity=tx.quantity,
                 price=tx.price,
                 total_spent=tx.total_spent,
+                transaction_type=TransactionType.BUY if tx.transaction_type == DBTransactionType.BUY else TransactionType.SELL,
                 timestamp=tx.timestamp
             )
             for tx in transactions

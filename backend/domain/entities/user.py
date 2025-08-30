@@ -2,6 +2,12 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import List, Optional
 from datetime import datetime
+from enum import Enum
+
+
+class TransactionType(Enum):
+    BUY = "buy"
+    SELL = "sell"
 
 
 @dataclass
@@ -50,6 +56,7 @@ class CoinTransaction:
     quantity: Decimal
     price: Decimal
     total_spent: Decimal
+    transaction_type: TransactionType = TransactionType.BUY
     timestamp: Optional[datetime] = None  # Маппинг на timestamp в БД
     
     def __post_init__(self):

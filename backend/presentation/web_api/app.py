@@ -11,17 +11,19 @@ from infrastructure.database.repositories import (
     SQLAlchemyPortfolioRepository,
     SQLAlchemyTransactionRepository
 )
-from domain.use_cases.portfolio_use_cases import GetUserPortfolioUseCase, AddCoinToPortfolioUseCase
-from domain.entities.user import UserPortfolio, CoinTransaction
+from domain.use_cases.portfolio_use_cases import GetUserPortfolioUseCase, AddCoinToPortfolioUseCase, SellCoinFromPortfolioUseCase
+from domain.entities.user import UserPortfolio, CoinTransaction, TransactionType
 from infrastructure.external_apis.coin_gecko_api import CoinGeckoAPI
 from shared.types.api_schemas import (
     PortfolioResponse,
     PortfolioItemResponse,
     AddCoinRequest,
+    SellCoinRequest,
     TransactionResponse,
     UserResponse,
     CoinDataResponse,
-    ErrorResponse
+    ErrorResponse,
+    TransactionType as APITransactionType
 )
 
 app = FastAPI(title="Crypto Bot API", version="1.0.0")
@@ -197,6 +199,7 @@ async def add_coin_to_portfolio(
             name=request.name,
             quantity=request.quantity,
             price=request.price,
+            transaction_type=APITransactionType.BUY,
             total_amount=request.quantity * request.price
         )
     except HTTPException:
@@ -206,6 +209,47 @@ async def add_coin_to_portfolio(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Ошибка при добавлении монеты: {str(e)}")
+
+@api_router.post("/portfolio/sell-coin", response_model=TransactionResponse)
+async def sell_coin_from_portfolio(
+    request: SellCoinRequest,
+    user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
+    portfolio_repo: SQLAlchemyPortfolioRepository = Depends(get_portfolio_repository),
+    transaction_repo: SQLAlchemyTransactionRepository = Depends(get_transaction_repository)
+):
+    """Продать монету из портфеля"""
+    
+    try:
+        # Логируем запрос для отладки
+        print(f"Получен запрос на продажу монеты: {request}")
+        
+        use_case = SellCoinFromPortfolioUseCase(user_repo, portfolio_repo, transaction_repo)
+        
+        success = await use_case.execute(
+            telegram_id=request.telegram_id,
+            symbol=request.symbol,
+            quantity=request.quantity,
+            price=request.price
+        )
+        
+        if not success:
+            raise HTTPException(status_code=400, detail="Ошибка при продаже монеты: недостаточно монет или монета не найдена")
+        
+        return TransactionResponse(
+            symbol=request.symbol,
+            name="",  # Имя будет получено из портфеля
+            quantity=request.quantity,
+            price=request.price,
+            transaction_type=APITransactionType.SELL,
+            total_amount=request.quantity * request.price
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Ошибка в sell_coin_from_portfolio: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Ошибка при продаже монеты: {str(e)}")
 
 @api_router.get("/transactions/{telegram_id}", response_model=List[TransactionResponse])
 async def get_transactions(
@@ -230,6 +274,7 @@ async def get_transactions(
                 quantity=tx.quantity,
                 price=tx.price,
                 total_spent=tx.total_spent,
+                transaction_type=APITransactionType.BUY if tx.transaction_type == TransactionType.BUY else APITransactionType.SELL,
                 timestamp=tx.timestamp
             )
             for tx in transactions

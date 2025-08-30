@@ -1,9 +1,15 @@
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, BigInteger, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, BigInteger, TIMESTAMP, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+import enum
 
 Base = declarative_base()
+
+
+class TransactionType(enum.Enum):
+    BUY = "buy"
+    SELL = "sell"
 
 
 class User(Base):
@@ -43,6 +49,7 @@ class CoinTransaction(Base):
     quantity = Column(Numeric, nullable=False)
     price = Column(Numeric, nullable=False)
     total_spent = Column(Numeric, nullable=False)
+    transaction_type = Column(Enum(TransactionType), nullable=False, default=TransactionType.BUY)
     timestamp = Column(TIMESTAMP, default=datetime.utcnow)
 
     user = relationship("User", back_populates="transactions") 

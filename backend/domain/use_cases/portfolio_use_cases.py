@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List, Optional
 from datetime import datetime
-from ..entities.user import User, UserPortfolio, CoinTransaction
+from ..entities.user import User, UserPortfolio, CoinTransaction, TransactionType
 from ..repositories.user_repository import UserRepository, PortfolioRepository, TransactionRepository
 
 
@@ -140,5 +140,74 @@ class AddCoinToPortfolioUseCase:
                 last_updated=datetime.utcnow()
             )
             await self.portfolio_repo.add_coin_to_portfolio(new_coin)
+        
+        return True
+
+
+class SellCoinFromPortfolioUseCase:
+    """Use case для продажи монеты из портфеля"""
+    
+    def __init__(self, user_repo: UserRepository, portfolio_repo: PortfolioRepository, 
+                 transaction_repo: TransactionRepository):
+        self.user_repo = user_repo
+        self.portfolio_repo = portfolio_repo
+        self.transaction_repo = transaction_repo
+    
+    async def execute(self, telegram_id: int, symbol: str, 
+                     quantity: Decimal, price: Decimal) -> bool:
+        """Продать монету из портфеля"""
+        user = await self.user_repo.get_by_telegram_id(telegram_id)
+        if not user:
+            return False
+        
+        # Проверяем, есть ли такая монета в портфеле
+        existing_coin = await self.portfolio_repo.get_portfolio_item(user.id, symbol)
+        if not existing_coin:
+            return False
+        
+        # Проверяем, достаточно ли монет для продажи
+        if existing_coin.total_quantity < quantity:
+            return False
+        
+        total_received = price * quantity
+        
+        # Создаем транзакцию продажи
+        transaction = CoinTransaction(
+            id=None,
+            user_id=user.id,
+            symbol=symbol,
+            name=existing_coin.name,
+            quantity=quantity,
+            price=price,
+            total_spent=total_received,  # Для продажи это сумма получена
+            transaction_type=TransactionType.SELL,
+            timestamp=None  # Будет установлено в репозитории
+        )
+        await self.transaction_repo.create_transaction(transaction)
+        
+        # Обновляем портфель
+        new_quantity = existing_coin.total_quantity - quantity
+        
+        if new_quantity == 0:
+            # Если продали все монеты, удаляем из портфеля
+            # TODO: добавить метод delete_portfolio_item в репозиторий
+            pass
+        else:
+            # Обновляем количество и общую потраченную сумму
+            # Средняя цена остается той же
+            new_total_spent = existing_coin.total_spent - (existing_coin.avg_price * quantity)
+            
+            updated_coin = UserPortfolio(
+                id=existing_coin.id,
+                user_id=user.id,
+                symbol=symbol,
+                name=existing_coin.name,
+                total_quantity=new_quantity,
+                avg_price=existing_coin.avg_price,  # Средняя цена покупки не меняется
+                current_price=existing_coin.current_price,
+                total_spent=new_total_spent,
+                last_updated=datetime.utcnow()
+            )
+            await self.portfolio_repo.update_portfolio_item(updated_coin)
         
         return True 

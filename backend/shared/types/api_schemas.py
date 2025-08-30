@@ -2,6 +2,12 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from decimal import Decimal
 from datetime import datetime
+from enum import Enum
+
+
+class TransactionType(str, Enum):
+    BUY = "buy"
+    SELL = "sell"
 
 
 class ErrorResponse(BaseModel):
@@ -51,6 +57,7 @@ class TransactionResponse(BaseModel):
     quantity: Decimal
     price: Decimal
     total_spent: Optional[Decimal] = None
+    transaction_type: TransactionType = TransactionType.BUY
     timestamp: Optional[datetime] = None
     total_amount: Optional[Decimal] = None
     
@@ -66,6 +73,14 @@ class AddCoinRequest(BaseModel):
     telegram_id: int
     symbol: str = Field(..., min_length=1, max_length=10)
     name: str = Field(..., min_length=1, max_length=100)
+    quantity: Decimal = Field(..., gt=0)
+    price: Decimal = Field(..., gt=0)
+
+
+class SellCoinRequest(BaseModel):
+    """Схема запроса для продажи монеты"""
+    telegram_id: int
+    symbol: str = Field(..., min_length=1, max_length=10)
     quantity: Decimal = Field(..., gt=0)
     price: Decimal = Field(..., gt=0)
     
