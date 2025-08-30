@@ -15,9 +15,9 @@ import {
   Paper,
   Chip,
 } from '@mui/material';
-import { Receipt as ReceiptIcon } from '@mui/icons-material';
+import { Receipt as ReceiptIcon, ShoppingCart, Sell } from '@mui/icons-material';
 import { apiService } from '../services/api';
-import { Transaction } from '../types';
+import { Transaction, TransactionType } from '../types';
 
 const Transactions: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -128,11 +128,11 @@ const Transactions: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Монета</TableCell>
+                    <TableCell align="center">Тип</TableCell>
                     <TableCell align="right">Количество</TableCell>
-                    <TableCell align="right">Цена покупки</TableCell>
+                    <TableCell align="right">Цена</TableCell>
                     <TableCell align="right">Общая сумма</TableCell>
                     <TableCell align="right">Дата</TableCell>
-                    <TableCell align="center">Статус</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -148,6 +148,15 @@ const Transactions: React.FC = () => {
                           </Typography>
                         </Box>
                       </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={transaction.transaction_type === TransactionType.BUY ? 'Покупка' : 'Продажа'}
+                          color={transaction.transaction_type === TransactionType.BUY ? 'success' : 'error'}
+                          size="small"
+                          icon={transaction.transaction_type === TransactionType.BUY ? <ShoppingCart /> : <Sell />}
+                          variant="outlined"
+                        />
+                      </TableCell>
                       <TableCell align="right">
                         <Typography variant="body1">
                           {Number(transaction.quantity).toFixed(4)}
@@ -159,22 +168,18 @@ const Transactions: React.FC = () => {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Typography variant="body1" fontWeight="bold">
-                          ${(Number(transaction.total_spent) || Number(transaction.quantity) * Number(transaction.price)).toFixed(2)}
+                        <Typography 
+                          variant="body1" 
+                          fontWeight="bold"
+                          color={transaction.transaction_type === TransactionType.BUY ? 'error.main' : 'success.main'}
+                        >
+                          {transaction.transaction_type === TransactionType.BUY ? '-' : '+'}${(Number(transaction.total_spent) || Number(transaction.quantity) * Number(transaction.price)).toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" color="textSecondary">
                           {transaction.timestamp ? formatDate(transaction.timestamp) : 'Сегодня'}
                         </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label="Завершена"
-                          color="success"
-                          size="small"
-                          variant="outlined"
-                        />
                       </TableCell>
                     </TableRow>
                   ))}

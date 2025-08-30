@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Portfolio, Transaction, AddCoinRequest, CoinData } from '../types';
+import { User, Portfolio, Transaction, AddCoinRequest, SellCoinRequest, CoinData } from '../types';
 
 // Определяем базовый URL для API
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -54,6 +54,12 @@ export const apiService = {
   // Добавить монету
   addCoin: async (data: AddCoinRequest): Promise<Transaction> => {
     const response = await api.post('/portfolio/add-coin', data);
+    return response.data;
+  },
+
+  // Продать монету
+  sellCoin: async (data: SellCoinRequest): Promise<Transaction> => {
+    const response = await api.post('/portfolio/sell-coin', data);
     return response.data;
   },
 

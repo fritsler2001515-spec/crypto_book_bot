@@ -10,22 +10,37 @@ import {
   Collapse,
   IconButton,
   Divider,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 
 import { 
   TrendingUp, 
   TrendingDown, 
   ExpandMore, 
-  ExpandLess 
+  ExpandLess,
+  Sell as SellIcon
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
-import { PortfolioItem } from '../types';
+import { PortfolioItem, SellCoinRequest } from '../types';
 
 const Portfolio: React.FC = () => {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+  
+  // Состояние для диалога продажи
+  const [sellDialogOpen, setSellDialogOpen] = useState(false);
+  const [selectedCoin, setSelectedCoin] = useState<PortfolioItem | null>(null);
+  const [sellQuantity, setSellQuantity] = useState('');
+  const [sellPrice, setSellPrice] = useState('');
+  const [sellLoading, setSellLoading] = useState(false);
+  const [sellError, setSellError] = useState<string | null>(null);
 
   // Для демонстрации используем тестовый Telegram ID
   const testTelegramId = 1042267533;
@@ -60,6 +75,63 @@ const Portfolio: React.FC = () => {
       newExpandedCards.add(cardId);
     }
     setExpandedCards(newExpandedCards);
+  };
+
+  const openSellDialog = (coin: PortfolioItem, event: React.MouseEvent) => {
+    event.stopPropagation(); // Предотвращаем раскрытие карточки
+    setSelectedCoin(coin);
+    setSellQuantity('');
+    setSellPrice(coin.current_price.toString());
+    setSellError(null);
+    setSellDialogOpen(true);
+  };
+
+  const closeSellDialog = () => {
+    setSellDialogOpen(false);
+    setSelectedCoin(null);
+    setSellQuantity('');
+    setSellPrice('');
+    setSellError(null);
+  };
+
+  const handleSellCoin = async () => {
+    if (!selectedCoin) return;
+
+    try {
+      setSellLoading(true);
+      setSellError(null);
+
+      const quantity = parseFloat(sellQuantity.replace(',', '.'));
+      const price = parseFloat(sellPrice.replace(',', '.'));
+
+      if (quantity <= 0 || price <= 0) {
+        setSellError('Количество и цена должны быть больше нуля');
+        return;
+      }
+
+      if (quantity > selectedCoin.total_quantity) {
+        setSellError(`Недостаточно монет. Доступно: ${selectedCoin.total_quantity}`);
+        return;
+      }
+
+      await apiService.sellCoin({
+        telegram_id: testTelegramId,
+        symbol: selectedCoin.symbol,
+        quantity: quantity,
+        price: price
+      });
+
+      // Обновляем портфель
+      const portfolioData = await apiService.getPortfolio(testTelegramId);
+      setPortfolio(portfolioData.portfolio);
+
+      closeSellDialog();
+    } catch (err) {
+      setSellError('Ошибка при продаже монеты');
+      console.error(err);
+    } finally {
+      setSellLoading(false);
+    }
   };
 
   if (loading) {
@@ -308,6 +380,19 @@ const Portfolio: React.FC = () => {
                             </Typography>
                           </Box>
                         </Box>
+                        
+                        {/* Кнопка продажи */}
+                        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<SellIcon />}
+                            onClick={(e) => openSellDialog(item, e)}
+                            size="small"
+                          >
+                            Продать
+                          </Button>
+                        </Box>
                       </Collapse>
                     </CardContent>
                   </Card>
@@ -316,6 +401,88 @@ const Portfolio: React.FC = () => {
           </Box>
         )}
       </Box>
+
+      {/* Диалог продажи */}
+      <Dialog open={sellDialogOpen} onClose={closeSellDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Продать {selectedCoin?.symbol}
+        </DialogTitle>
+        <DialogContent>
+          {sellError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {sellError}
+            </Alert>
+          )}
+          
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              Доступно для продажи: {selectedCoin?.total_quantity} {selectedCoin?.symbol}
+            </Typography>
+            
+            <TextField
+              fullWidth
+              label="Количество для продажи"
+              type="text"
+              inputProps={{
+                inputMode: "decimal"
+              }}
+              value={sellQuantity}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^[0-9]*[.,]?[0-9]*$/.test(value) || value === '') {
+                  setSellQuantity(value);
+                }
+              }}
+              placeholder="0.5"
+              helperText="Введите количество монет для продажи"
+              sx={{ mb: 2 }}
+            />
+            
+            <TextField
+              fullWidth
+              label="Цена продажи (USD)"
+              type="text"
+              inputProps={{
+                inputMode: "decimal"
+              }}
+              value={sellPrice}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^[0-9]*[.,]?[0-9]*$/.test(value) || value === '') {
+                  setSellPrice(value);
+                }
+              }}
+              placeholder="50000"
+              helperText="Введите цену за одну монету"
+            />
+            
+            {sellQuantity && sellPrice && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Общая сумма к получению:
+                </Typography>
+                <Typography variant="h6" color="success.main">
+                  ${(parseFloat(sellQuantity.replace(',', '.')) * parseFloat(sellPrice.replace(',', '.'))).toFixed(2)}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeSellDialog}>
+            Отмена
+          </Button>
+          <Button
+            onClick={handleSellCoin}
+            variant="contained"
+            color="error"
+            disabled={sellLoading || !sellQuantity || !sellPrice}
+            startIcon={sellLoading ? <CircularProgress size={20} /> : <SellIcon />}
+          >
+            {sellLoading ? 'Продажа...' : 'Продать'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -87,7 +87,15 @@ const Dashboard: React.FC = () => {
     fetchMarketData();
   }, []);
 
-  const totalValue = portfolio?.portfolio.reduce((sum, item) => sum + (Number(item.total_spent) || 0), 0) || 0;
+  // Расчет показателей портфеля
+  const totalSpent = portfolio?.portfolio.reduce((sum, item) => sum + (Number(item.total_spent) || 0), 0) || 0;
+  const currentValue = portfolio?.portfolio.reduce((sum, item) => {
+    const currentPrice = Number(item.current_price) || 0;
+    const quantity = Number(item.total_quantity) || 0;
+    return sum + (currentPrice * quantity);
+  }, 0) || 0;
+  const profitLoss = currentValue - totalSpent;
+  const profitLossPercent = totalSpent > 0 ? ((profitLoss / totalSpent) * 100) : 0;
   const totalCoins = portfolio?.portfolio.length || 0;
 
   const quickActions = [
@@ -151,57 +159,66 @@ const Dashboard: React.FC = () => {
         📊 Дашборд
       </Typography>
 
-      {/* Статистика */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Общая стоимость
+      {/* Статистика портфеля */}
+      <Card sx={{ 
+        bgcolor: 'background.paper', 
+        mb: 4, 
+        borderRadius: 3,
+        overflow: 'hidden'
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          {/* Общая стоимость */}
+          <Box sx={{ mb: 3 }}>
+            <Typography color="textSecondary" gutterBottom>
+              Общая стоимость
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              ${totalSpent.toFixed(2)}
+            </Typography>
+          </Box>
+
+          {/* Текущая стоимость */}
+          <Box sx={{ mb: 3 }}>
+            <Typography color="textSecondary" gutterBottom>
+              Текущая стоимость
+            </Typography>
+            <Typography variant="h4" sx={{ 
+              fontWeight: 'bold', 
+              color: currentValue > 0 ? 'success.main' : 'text.secondary' 
+            }}>
+              ${currentValue.toFixed(2)}
+            </Typography>
+          </Box>
+
+          {/* Прибыль/Убыток */}
+          <Box sx={{ mb: 3 }}>
+            <Typography color="textSecondary" gutterBottom>
+              Прибыль/Убыток
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 'bold', 
+                color: profitLoss >= 0 ? 'success.main' : 'error.main' 
+              }}>
+                {profitLoss >= 0 ? '📈' : '📉'} ${Math.abs(profitLoss).toFixed(2)}
               </Typography>
-              <Typography variant="h5" color="primary.main">
-                ${totalValue.toFixed(2)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Количество монет
-              </Typography>
-              <Typography variant="h5" color="secondary.main">
-                {totalCoins}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Последнее обновление
-              </Typography>
-              <Typography variant="h6" color="success.main">
-                Сегодня
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-        <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-          <Card sx={{ bgcolor: 'background.paper' }}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Статус бота
-              </Typography>
-              <Typography variant="h6" color="success.main">
-                🟢 Активен
-              </Typography>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+            </Box>
+          </Box>
+
+          {/* Процент изменения */}
+          <Box>
+            <Typography color="textSecondary" gutterBottom>
+              Процент изменения
+            </Typography>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 'bold', 
+              color: profitLossPercent >= 0 ? 'success.main' : 'error.main' 
+            }}>
+              {profitLossPercent >= 0 ? '+' : ''}{profitLossPercent.toFixed(2)}%
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Рыночные данные */}
       <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>

@@ -21,6 +21,11 @@ export interface Portfolio {
   portfolio: PortfolioItem[];
 }
 
+export enum TransactionType {
+  BUY = "buy",
+  SELL = "sell"
+}
+
 export interface Transaction {
   id?: number;
   symbol: string;
@@ -28,6 +33,7 @@ export interface Transaction {
   quantity: number;
   price: number;
   total_spent?: number;
+  transaction_type: TransactionType;
   timestamp?: string;
   total_amount?: number;
 }
@@ -36,6 +42,13 @@ export interface AddCoinRequest {
   telegram_id: number;
   symbol: string;
   name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface SellCoinRequest {
+  telegram_id: number;
+  symbol: string;
   quantity: number;
   price: number;
 }
