@@ -101,6 +101,7 @@ class AddCoinToPortfolioUseCase:
             quantity=quantity,
             price=price,
             total_spent=total_spent,
+            transaction_type=TransactionType.BUY,
             timestamp=None  # Будет установлено в репозитории
         )
         await self.transaction_repo.create_transaction(transaction)

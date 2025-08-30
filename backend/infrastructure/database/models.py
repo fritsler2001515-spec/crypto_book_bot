@@ -49,7 +49,7 @@ class CoinTransaction(Base):
     quantity = Column(Numeric, nullable=False)
     price = Column(Numeric, nullable=False)
     total_spent = Column(Numeric, nullable=False)
-    transaction_type = Column(Enum(TransactionType), nullable=False, default=TransactionType.BUY)
+    transaction_type = Column(Enum(TransactionType), nullable=True, default=TransactionType.BUY)
     timestamp = Column(TIMESTAMP, default=datetime.utcnow)
 
     user = relationship("User", back_populates="transactions") 

@@ -169,21 +169,33 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Преобразуем доменный тип в тип БД
         db_transaction_type = DBTransactionType.BUY if transaction.transaction_type == TransactionType.BUY else DBTransactionType.SELL
         
-        db_transaction = CoinTransaction(
-            user_id=transaction.user_id,
-            symbol=transaction.symbol,
-            name=transaction.name,
-            quantity=transaction.quantity,
-            price=transaction.price,
-            total_spent=transaction.total_spent,
-            transaction_type=db_transaction_type,
-            timestamp=transaction.timestamp or datetime.utcnow()
-        )
+        # Создаем транзакцию с обработкой случая, когда колонка может не существовать
+        transaction_data = {
+            'user_id': transaction.user_id,
+            'symbol': transaction.symbol,
+            'name': transaction.name,
+            'quantity': transaction.quantity,
+            'price': transaction.price,
+            'total_spent': transaction.total_spent,
+            'timestamp': transaction.timestamp or datetime.utcnow()
+        }
+        
+        # Добавляем transaction_type только если колонка существует
+        try:
+            transaction_data['transaction_type'] = db_transaction_type
+            db_transaction = CoinTransaction(**transaction_data)
+        except Exception as e:
+            print(f"Создаем транзакцию без типа (старая схема БД): {e}")
+            # Убираем transaction_type для совместимости со старой схемой
+            del transaction_data['transaction_type']
+            db_transaction = CoinTransaction(**transaction_data)
         self.session.add(db_transaction)
         await self.session.commit()
         await self.session.refresh(db_transaction)
         # Преобразуем тип БД обратно в доменный тип
-        domain_transaction_type = TransactionType.BUY if db_transaction.transaction_type == DBTransactionType.BUY else TransactionType.SELL
+        domain_transaction_type = TransactionType.BUY
+        if hasattr(db_transaction, 'transaction_type') and db_transaction.transaction_type:
+            domain_transaction_type = TransactionType.BUY if db_transaction.transaction_type == DBTransactionType.BUY else TransactionType.SELL
         
         return TransactionEntity(
             id=db_transaction.id,
@@ -212,7 +224,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                 quantity=tx.quantity,
                 price=tx.price,
                 total_spent=tx.total_spent,
-                transaction_type=TransactionType.BUY if tx.transaction_type == DBTransactionType.BUY else TransactionType.SELL,
+                transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == DBTransactionType.SELL) else TransactionType.BUY,
                 timestamp=tx.timestamp
             )
             for tx in transactions
