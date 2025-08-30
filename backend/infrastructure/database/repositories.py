@@ -210,22 +210,53 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         )
 
     async def get_user_transactions(self, user_id: int) -> List[TransactionEntity]:
-        result = await self.session.execute(
-            select(CoinTransaction).where(CoinTransaction.user_id == user_id)
-            .order_by(CoinTransaction.timestamp.desc())
-        )
-        transactions = result.scalars().all()
-        return [
-            TransactionEntity(
-                id=tx.id,
-                user_id=tx.user_id,
-                symbol=tx.symbol,
-                name=tx.name,
-                quantity=tx.quantity,
-                price=tx.price,
-                total_spent=tx.total_spent,
-                transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == DBTransactionType.SELL) else TransactionType.BUY,
-                timestamp=tx.timestamp
+        # Проверяем, существует ли колонка transaction_type
+        try:
+            # Пытаемся выполнить запрос с transaction_type
+            result = await self.session.execute(
+                select(CoinTransaction).where(CoinTransaction.user_id == user_id)
+                .order_by(CoinTransaction.timestamp.desc())
             )
-            for tx in transactions
-        ] 
+            transactions = result.scalars().all()
+            return [
+                TransactionEntity(
+                    id=tx.id,
+                    user_id=tx.user_id,
+                    symbol=tx.symbol,
+                    name=tx.name,
+                    quantity=tx.quantity,
+                    price=tx.price,
+                    total_spent=tx.total_spent,
+                    transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == DBTransactionType.SELL) else TransactionType.BUY,
+                    timestamp=tx.timestamp
+                )
+                for tx in transactions
+            ]
+        except Exception as e:
+            if "transaction_type does not exist" in str(e):
+                print("Колонка transaction_type не существует, используем старую схему")
+                # Выполняем запрос без transaction_type
+                result = await self.session.execute(
+                    select(CoinTransaction.id, CoinTransaction.user_id, CoinTransaction.symbol, 
+                          CoinTransaction.name, CoinTransaction.quantity, CoinTransaction.price,
+                          CoinTransaction.total_spent, CoinTransaction.timestamp)
+                    .where(CoinTransaction.user_id == user_id)
+                    .order_by(CoinTransaction.timestamp.desc())
+                )
+                transactions = result.all()
+                return [
+                    TransactionEntity(
+                        id=tx.id,
+                        user_id=tx.user_id,
+                        symbol=tx.symbol,
+                        name=tx.name,
+                        quantity=tx.quantity,
+                        price=tx.price,
+                        total_spent=tx.total_spent,
+                        transaction_type=TransactionType.BUY,  # Все старые транзакции считаем покупками
+                        timestamp=tx.timestamp
+                    )
+                    for tx in transactions
+                ]
+            else:
+                raise 
