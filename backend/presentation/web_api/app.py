@@ -86,12 +86,18 @@ async def migrate_transaction_type():
         print("Добавляем колонку transaction_type...")
         
         # Сначала добавляем колонку как TEXT
-        add_column_query = """
-        ALTER TABLE coin_transactions 
-        ADD COLUMN transaction_type TEXT DEFAULT 'buy';
-        """
-        await conn.execute(add_column_query)
-        print("✅ Колонка transaction_type добавлена как TEXT")
+        try:
+            add_column_query = """
+            ALTER TABLE coin_transactions 
+            ADD COLUMN transaction_type TEXT DEFAULT 'buy';
+            """
+            await conn.execute(add_column_query)
+            print("✅ Колонка transaction_type добавлена как TEXT")
+        except Exception as e:
+            if "already exists" in str(e):
+                print("✅ Колонка уже существует как TEXT")
+            else:
+                raise
         
         # Обновляем все существующие записи
         update_existing_query = """
@@ -113,6 +119,14 @@ async def migrate_transaction_type():
         await conn.execute(create_enum_query)
         print("✅ ENUM тип создан")
         
+        # Убираем DEFAULT перед изменением типа
+        remove_default_query = """
+        ALTER TABLE coin_transactions 
+        ALTER COLUMN transaction_type DROP DEFAULT;
+        """
+        await conn.execute(remove_default_query)
+        print("✅ DEFAULT убран")
+        
         # Изменяем тип колонки на ENUM
         alter_column_query = """
         ALTER TABLE coin_transactions 
@@ -121,6 +135,14 @@ async def migrate_transaction_type():
         """
         await conn.execute(alter_column_query)
         print("✅ Колонка преобразована в ENUM тип")
+        
+        # Устанавливаем новый DEFAULT для ENUM
+        set_default_query = """
+        ALTER TABLE coin_transactions 
+        ALTER COLUMN transaction_type SET DEFAULT 'buy'::transactiontype;
+        """
+        await conn.execute(set_default_query)
+        print("✅ DEFAULT установлен для ENUM")
         
         await conn.close()
         
