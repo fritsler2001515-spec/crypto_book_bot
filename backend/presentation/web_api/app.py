@@ -162,6 +162,73 @@ async def migrate_transaction_type():
             "message": f"Ошибка при миграции: {str(e)}"
         }
 
+@api_router.post("/admin/fix-transaction-enum")
+async def fix_transaction_enum():
+    """Исправить значения ENUM в существующих записях"""
+    try:
+        import asyncpg
+        from shared.config import settings
+        
+        # Получаем URL базы данных
+        if settings.DATABASE_URL:
+            db_url = settings.DATABASE_URL
+        else:
+            db_url = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+        
+        print("Исправляем значения ENUM...")
+        
+        # Подключаемся к базе данных
+        conn = await asyncpg.connect(db_url)
+        
+        # Пересоздаем ENUM тип с правильными значениями
+        recreate_enum_query = """
+        -- Удаляем старый тип и создаем новый
+        DROP TYPE IF EXISTS transactiontype CASCADE;
+        CREATE TYPE transactiontype AS ENUM ('BUY', 'SELL');
+        """
+        await conn.execute(recreate_enum_query)
+        print("✅ ENUM тип пересоздан")
+        
+        # Изменяем колонку обратно на TEXT временно
+        to_text_query = """
+        ALTER TABLE coin_transactions 
+        ALTER COLUMN transaction_type TYPE TEXT;
+        """
+        await conn.execute(to_text_query)
+        print("✅ Колонка изменена на TEXT")
+        
+        # Обновляем значения на uppercase
+        update_values_query = """
+        UPDATE coin_transactions 
+        SET transaction_type = UPPER(transaction_type);
+        """
+        result = await conn.execute(update_values_query)
+        print(f"✅ Обновлено значений: {result}")
+        
+        # Изменяем обратно на ENUM
+        to_enum_query = """
+        ALTER TABLE coin_transactions 
+        ALTER COLUMN transaction_type TYPE transactiontype 
+        USING transaction_type::transactiontype;
+        """
+        await conn.execute(to_enum_query)
+        print("✅ Колонка изменена на ENUM")
+        
+        await conn.close()
+        
+        return {
+            "status": "success", 
+            "message": "ENUM значения исправлены",
+            "details": f"Обновлено записей: {result}"
+        }
+        
+    except Exception as e:
+        print(f"❌ Ошибка при исправлении ENUM: {e}")
+        return {
+            "status": "error",
+            "message": f"Ошибка при исправлении ENUM: {str(e)}"
+        }
+
 @api_router.get("/portfolio-test/{telegram_id}")
 async def test_portfolio(telegram_id: int):
     """Тестовый эндпоинт портфеля"""
