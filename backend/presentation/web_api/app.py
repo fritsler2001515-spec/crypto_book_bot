@@ -99,25 +99,28 @@ async def migrate_transaction_type():
             else:
                 raise
         
-        # Обновляем все существующие записи
+        # Обновляем все существующие записи на uppercase
         update_existing_query = """
         UPDATE coin_transactions 
-        SET transaction_type = 'buy' 
-        WHERE transaction_type IS NULL OR transaction_type = '';
+        SET transaction_type = 'BUY' 
+        WHERE transaction_type IS NULL OR transaction_type = '' OR transaction_type = 'buy';
         """
         result = await conn.execute(update_existing_query)
         print(f"✅ Обновлено существующих записей: {result}")
         
-        # Теперь создаем ENUM тип
+        # Теперь создаем ENUM тип с правильными значениями
         create_enum_query = """
         DO $$ BEGIN
-            CREATE TYPE transactiontype AS ENUM ('buy', 'sell');
+            CREATE TYPE transactiontype AS ENUM ('BUY', 'SELL');
         EXCEPTION
-            WHEN duplicate_object THEN null;
+            WHEN duplicate_object THEN 
+                -- Если тип уже существует, пересоздаем его
+                DROP TYPE IF EXISTS transactiontype CASCADE;
+                CREATE TYPE transactiontype AS ENUM ('BUY', 'SELL');
         END $$;
         """
         await conn.execute(create_enum_query)
-        print("✅ ENUM тип создан")
+        print("✅ ENUM тип создан с правильными значениями")
         
         # Убираем DEFAULT перед изменением типа
         remove_default_query = """
@@ -139,7 +142,7 @@ async def migrate_transaction_type():
         # Устанавливаем новый DEFAULT для ENUM
         set_default_query = """
         ALTER TABLE coin_transactions 
-        ALTER COLUMN transaction_type SET DEFAULT 'buy'::transactiontype;
+        ALTER COLUMN transaction_type SET DEFAULT 'BUY'::transactiontype;
         """
         await conn.execute(set_default_query)
         print("✅ DEFAULT установлен для ENUM")

@@ -22,8 +22,8 @@ export interface Portfolio {
 }
 
 export enum TransactionType {
-  BUY = "buy",
-  SELL = "sell"
+  BUY = "BUY",
+  SELL = "SELL"
 }
 
 export interface Transaction {

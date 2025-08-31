@@ -6,8 +6,8 @@ from enum import Enum
 
 
 class TransactionType(Enum):
-    BUY = "buy"
-    SELL = "sell"
+    BUY = "BUY"
+    SELL = "SELL"
 
 
 @dataclass
