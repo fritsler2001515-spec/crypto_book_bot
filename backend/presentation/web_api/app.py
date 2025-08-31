@@ -85,7 +85,24 @@ async def migrate_transaction_type():
         
         print("Добавляем колонку transaction_type...")
         
-        # Создаем ENUM тип, если его нет
+        # Сначала добавляем колонку как TEXT
+        add_column_query = """
+        ALTER TABLE coin_transactions 
+        ADD COLUMN transaction_type TEXT DEFAULT 'buy';
+        """
+        await conn.execute(add_column_query)
+        print("✅ Колонка transaction_type добавлена как TEXT")
+        
+        # Обновляем все существующие записи
+        update_existing_query = """
+        UPDATE coin_transactions 
+        SET transaction_type = 'buy' 
+        WHERE transaction_type IS NULL OR transaction_type = '';
+        """
+        result = await conn.execute(update_existing_query)
+        print(f"✅ Обновлено существующих записей: {result}")
+        
+        # Теперь создаем ENUM тип
         create_enum_query = """
         DO $$ BEGIN
             CREATE TYPE transactiontype AS ENUM ('buy', 'sell');
@@ -94,31 +111,23 @@ async def migrate_transaction_type():
         END $$;
         """
         await conn.execute(create_enum_query)
-        print("✅ ENUM тип создан/проверен")
+        print("✅ ENUM тип создан")
         
-        # Добавляем колонку с значением по умолчанию
-        add_column_query = """
+        # Изменяем тип колонки на ENUM
+        alter_column_query = """
         ALTER TABLE coin_transactions 
-        ADD COLUMN transaction_type transactiontype NOT NULL DEFAULT 'buy';
+        ALTER COLUMN transaction_type TYPE transactiontype 
+        USING transaction_type::transactiontype;
         """
-        await conn.execute(add_column_query)
-        print("✅ Колонка transaction_type добавлена")
-        
-        # Обновляем существующие записи (все как покупки)
-        update_existing_query = """
-        UPDATE coin_transactions 
-        SET transaction_type = 'buy' 
-        WHERE transaction_type IS NULL;
-        """
-        result = await conn.execute(update_existing_query)
-        print(f"✅ Обновлено существующих записей: {result}")
+        await conn.execute(alter_column_query)
+        print("✅ Колонка преобразована в ENUM тип")
         
         await conn.close()
         
         return {
             "status": "success", 
             "message": "Миграция успешно завершена",
-            "details": f"Обновлено записей: {result}"
+            "details": "Колонка transaction_type добавлена и настроена"
         }
         
     except Exception as e:
