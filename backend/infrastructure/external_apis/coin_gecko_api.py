@@ -220,16 +220,72 @@ class CoinGeckoAPI:
                 'matic': 'matic-network',
                 'ltc': 'litecoin',
                 'link': 'chainlink',
+                'ape': 'apecoin',  # Добавляем APE
+                'atom': 'cosmos',
+                'near': 'near',
+                'uni': 'uniswap',
+                'shib': 'shiba-inu',
+                'pepe': 'pepe',
+                'wif': 'dogwifcoin',
+                'bonk': 'bonk',
+                'floki': 'floki',
             }
             
             # Преобразуем символы в ID
             coin_ids = []
+            missing_symbols = []
             for symbol in symbols:
                 symbol_lower = symbol.lower()
                 if symbol_lower in symbol_to_id:
                     coin_ids.append(symbol_to_id[symbol_lower])
+                else:
+                    missing_symbols.append(symbol)
+            
+            # Для отсутствующих символов пытаемся найти через поиск
+            if missing_symbols:
+                print(f"🔍 Ищем отсутствующие символы: {missing_symbols}")
+                for symbol in missing_symbols:
+                    try:
+                        # Ищем монету через search API
+                        search_url = f"{self.base_url}/search?query={symbol}"
+                        
+                        if not self.session:
+                            connector = aiohttp.TCPConnector(ssl=False)
+                            async with aiohttp.ClientSession(connector=connector) as session:
+                                async with session.get(search_url) as search_response:
+                                    if search_response.status == 200:
+                                        search_data = await search_response.json()
+                                        coins = search_data.get('coins', [])
+                                        # Берем первую найденную монету с точным совпадением символа
+                                        for coin in coins:
+                                            if coin.get('symbol', '').upper() == symbol.upper():
+                                                coin_id = coin.get('id')
+                                                if coin_id:
+                                                    print(f"✅ Найден {symbol}: {coin_id}")
+                                                    coin_ids.append(coin_id)
+                                                    symbol_to_id[symbol.lower()] = coin_id
+                                                break
+                        else:
+                            async with self.session.get(search_url) as search_response:
+                                if search_response.status == 200:
+                                    search_data = await search_response.json()
+                                    coins = search_data.get('coins', [])
+                                    # Берем первую найденную монету с точным совпадением символа
+                                    for coin in coins:
+                                        if coin.get('symbol', '').upper() == symbol.upper():
+                                            coin_id = coin.get('id')
+                                            if coin_id:
+                                                print(f"✅ Найден {symbol}: {coin_id}")
+                                                coin_ids.append(coin_id)
+                                                symbol_to_id[symbol.lower()] = coin_id
+                                            break
+                        
+                        await asyncio.sleep(0.1)  # Задержка между поисками
+                    except Exception as search_error:
+                        print(f"❌ Ошибка поиска {symbol}: {search_error}")
             
             if not coin_ids:
+                print("❌ Нет монет для обновления цен после поиска")
                 return {}
             
             # Делаем запрос к API
@@ -253,6 +309,7 @@ class CoinGeckoAPI:
                         
                         if response.status == 200:
                             data = await response.json()
+                            print(f"📊 Получены данные от CoinGecko: {data}")
                             
                             # Преобразуем обратно в символы
                             result = {}
@@ -261,8 +318,11 @@ class CoinGeckoAPI:
                             for coin_id, price_data in data.items():
                                 if coin_id in id_to_symbol:
                                     symbol = id_to_symbol[coin_id]
-                                    result[symbol] = price_data.get('usd', 0)
+                                    price = price_data.get('usd', 0)
+                                    result[symbol] = price
+                                    print(f"💰 {symbol.upper()}: ${price}")
                             
+                            print(f"✅ Итого получено цен: {len(result)}")
                             return result
             
             return {}

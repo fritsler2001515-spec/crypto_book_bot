@@ -27,10 +27,12 @@ class GetUserPortfolioUseCase:
                 from decimal import Decimal
                 from datetime import datetime, timedelta
                 
-                # Проверяем, нужно ли обновлять цены (если прошло более 10 минут)
+                # Проверяем, нужно ли обновлять цены (если прошло более 10 минут или цена = 0)
                 need_update = False
                 for item in portfolio_items:
-                    if not item.last_updated or (datetime.utcnow() - item.last_updated) > timedelta(minutes=10):
+                    if (not item.last_updated or 
+                        (datetime.utcnow() - item.last_updated) > timedelta(minutes=10) or
+                        item.current_price == 0):
                         need_update = True
                         break
                 
