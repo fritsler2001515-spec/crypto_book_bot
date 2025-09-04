@@ -191,8 +191,7 @@ class SellCoinFromPortfolioUseCase:
         
         if new_quantity == 0:
             # Если продали все монеты, удаляем из портфеля
-            # TODO: добавить метод delete_portfolio_item в репозиторий
-            pass
+            await self.portfolio_repo.delete_portfolio_item(existing_coin.id)
         else:
             # Обновляем количество и общую потраченную сумму
             # Средняя цена остается той же

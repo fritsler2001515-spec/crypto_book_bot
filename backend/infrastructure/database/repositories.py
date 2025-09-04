@@ -160,6 +160,22 @@ class SQLAlchemyPortfolioRepository(PortfolioRepository):
     async def get_portfolio_item(self, user_id: int, symbol: str) -> Optional[PortfolioEntity]:
         """Получить конкретную монету из портфеля (алиас для get_by_symbol)"""
         return await self.get_by_symbol(user_id, symbol)
+    
+    async def delete_portfolio_item(self, portfolio_item_id: int) -> bool:
+        """Удалить элемент из портфеля"""
+        try:
+            result = await self.session.execute(
+                select(UserPortfolio).where(UserPortfolio.id == portfolio_item_id)
+            )
+            db_item = result.scalar_one_or_none()
+            if db_item:
+                await self.session.delete(db_item)
+                await self.session.commit()
+                return True
+            return False
+        except Exception as e:
+            print(f"Ошибка при удалении элемента портфеля: {e}")
+            return False
 
 class SQLAlchemyTransactionRepository(TransactionRepository):
     def __init__(self, session: AsyncSession):
