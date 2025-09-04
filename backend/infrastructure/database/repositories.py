@@ -166,8 +166,8 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         self.session = session
 
     async def create_transaction(self, transaction: TransactionEntity) -> TransactionEntity:
-        # Преобразуем доменный тип в тип БД
-        db_transaction_type = DBTransactionType.BUY if transaction.transaction_type == TransactionType.BUY else DBTransactionType.SELL
+        # Преобразуем доменный тип в строку для БД
+        db_transaction_type = "BUY" if transaction.transaction_type == TransactionType.BUY else "SELL"
         
         # Создаем транзакцию с обработкой случая, когда колонка может не существовать
         transaction_data = {
@@ -195,7 +195,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Преобразуем тип БД обратно в доменный тип
         domain_transaction_type = TransactionType.BUY
         if hasattr(db_transaction, 'transaction_type') and db_transaction.transaction_type:
-            domain_transaction_type = TransactionType.BUY if db_transaction.transaction_type == DBTransactionType.BUY else TransactionType.SELL
+            domain_transaction_type = TransactionType.BUY if db_transaction.transaction_type == "BUY" else TransactionType.SELL
         
         return TransactionEntity(
             id=db_transaction.id,
@@ -227,7 +227,7 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                     quantity=tx.quantity,
                     price=tx.price,
                     total_spent=tx.total_spent,
-                    transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == DBTransactionType.SELL) else TransactionType.BUY,
+                    transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == "SELL") else TransactionType.BUY,
                     timestamp=tx.timestamp
                 )
                 for tx in transactions
