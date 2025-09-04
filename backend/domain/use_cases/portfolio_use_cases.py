@@ -27,41 +27,52 @@ class GetUserPortfolioUseCase:
                 from decimal import Decimal
                 from datetime import datetime, timedelta
                 
-                # Проверяем, нужно ли обновлять цены (если прошло более 5 минут)
+                # Проверяем, нужно ли обновлять цены (если прошло более 10 минут)
                 need_update = False
                 for item in portfolio_items:
-                    if not item.last_updated or (datetime.utcnow() - item.last_updated) > timedelta(minutes=5):
+                    if not item.last_updated or (datetime.utcnow() - item.last_updated) > timedelta(minutes=10):
                         need_update = True
                         break
                 
                 if need_update:
                     print(f"Обновляем цены для {len(portfolio_items)} монет")
                     
-                    coin_api = CoinGeckoAPI()
-                    
-                    # Получаем символы всех монет в портфеле
-                    symbols = [item.symbol for item in portfolio_items]
-                    print(f"Символы для обновления: {symbols}")
-                    
-                    # Получаем текущие цены
-                    current_prices = await coin_api.get_current_prices(symbols)
-                    print(f"Получены цены: {current_prices}")
-                    
-                    # Обновляем цены в портфеле
-                    updated_count = 0
-                    for item in portfolio_items:
-                        symbol_lower = item.symbol.lower()
-                        if symbol_lower in current_prices and current_prices[symbol_lower] > 0:
-                            old_price = float(item.current_price)
-                            item.current_price = Decimal(str(current_prices[symbol_lower]))
-                            item.last_updated = datetime.utcnow()
-                            print(f"Обновляем цену {item.symbol}: {old_price} -> {current_prices[symbol_lower]}")
-                            
-                            # Обновляем в базе данных
-                            await self.portfolio_repo.update_portfolio_item(item)
-                            updated_count += 1
-                    
-                    print(f"Обновлено цен в БД: {updated_count}")
+                    # Используем timeout для обновления цен, чтобы не блокировать запрос
+                    try:
+                        import asyncio
+                        coin_api = CoinGeckoAPI()
+                        
+                        # Получаем символы всех монет в портфеле
+                        symbols = [item.symbol for item in portfolio_items]
+                        print(f"Символы для обновления: {symbols}")
+                        
+                        # Получаем текущие цены с timeout 5 секунд
+                        current_prices = await asyncio.wait_for(
+                            coin_api.get_current_prices(symbols),
+                            timeout=5.0
+                        )
+                        print(f"Получены цены: {current_prices}")
+                        
+                        # Обновляем цены в портфеле
+                        updated_count = 0
+                        for item in portfolio_items:
+                            symbol_lower = item.symbol.lower()
+                            if symbol_lower in current_prices and current_prices[symbol_lower] > 0:
+                                old_price = float(item.current_price)
+                                item.current_price = Decimal(str(current_prices[symbol_lower]))
+                                item.last_updated = datetime.utcnow()
+                                print(f"Обновляем цену {item.symbol}: {old_price} -> {current_prices[symbol_lower]}")
+                                
+                                # Обновляем в базе данных
+                                await self.portfolio_repo.update_portfolio_item(item)
+                                updated_count += 1
+                        
+                        print(f"Обновлено цен в БД: {updated_count}")
+                    except asyncio.TimeoutError:
+                        print("⏰ Timeout при обновлении цен, пропускаем")
+                    except Exception as price_error:
+                        print(f"⚠️ Ошибка при обновлении цен: {price_error}")
+                        # Продолжаем без обновления цен
                 else:
                     print("Цены актуальны, обновление не требуется")
                         
