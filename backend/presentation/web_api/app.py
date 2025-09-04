@@ -162,6 +162,68 @@ async def migrate_transaction_type():
             "message": f"Ошибка при миграции: {str(e)}"
         }
 
+@api_router.post("/admin/simple-migration")
+async def simple_migration():
+    """Простая миграция - добавить transaction_type как TEXT"""
+    try:
+        import asyncpg
+        from shared.config import settings
+        
+        # Получаем URL базы данных
+        if settings.DATABASE_URL:
+            db_url = settings.DATABASE_URL
+        else:
+            db_url = f"postgresql://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+        
+        print("Простая миграция...")
+        
+        # Подключаемся к базе данных
+        conn = await asyncpg.connect(db_url)
+        
+        # Проверяем, существует ли колонка
+        check_query = """
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'coin_transactions' 
+        AND column_name = 'transaction_type';
+        """
+        
+        existing = await conn.fetchval(check_query)
+        
+        if not existing:
+            # Добавляем колонку как TEXT
+            add_query = """
+            ALTER TABLE coin_transactions 
+            ADD COLUMN transaction_type TEXT DEFAULT 'BUY';
+            """
+            await conn.execute(add_query)
+            print("✅ Колонка transaction_type добавлена как TEXT")
+        
+        # Обновляем все NULL значения на 'BUY'
+        update_query = """
+        UPDATE coin_transactions 
+        SET transaction_type = 'BUY' 
+        WHERE transaction_type IS NULL OR transaction_type = '';
+        """
+        result = await conn.execute(update_query)
+        print(f"✅ Обновлено записей: {result}")
+        
+        await conn.close()
+        
+        return {
+            "status": "success", 
+            "message": "Простая миграция завершена",
+            "column_exists": existing is not None,
+            "updated_records": result if not existing else "N/A"
+        }
+        
+    except Exception as e:
+        print(f"❌ Ошибка при простой миграции: {e}")
+        return {
+            "status": "error",
+            "message": f"Ошибка: {str(e)}"
+        }
+
 @api_router.post("/admin/fix-transaction-enum")
 async def fix_transaction_enum():
     """Исправить значения ENUM в существующих записях"""
