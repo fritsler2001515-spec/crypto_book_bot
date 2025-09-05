@@ -172,7 +172,7 @@ const Dashboard: React.FC = () => {
             <Typography color="textSecondary" gutterBottom>
               Общая стоимость
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'white' }}>
               ${totalSpent.toFixed(2)}
             </Typography>
           </Box>
@@ -184,7 +184,7 @@ const Dashboard: React.FC = () => {
             </Typography>
             <Typography variant="h4" sx={{ 
               fontWeight: 'bold', 
-              color: currentValue > 0 ? 'success.main' : 'text.secondary' 
+              color: 'white'
             }}>
               ${currentValue.toFixed(2)}
             </Typography>
@@ -198,7 +198,7 @@ const Dashboard: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="h5" sx={{ 
                 fontWeight: 'bold', 
-                color: profitLoss >= 0 ? 'success.main' : 'error.main' 
+                color: 'white'
               }}>
                 {profitLoss >= 0 ? '📈' : '📉'} ${Math.abs(profitLoss).toFixed(2)}
               </Typography>
@@ -212,7 +212,7 @@ const Dashboard: React.FC = () => {
             </Typography>
             <Typography variant="h5" sx={{ 
               fontWeight: 'bold', 
-              color: profitLossPercent >= 0 ? 'success.main' : 'error.main' 
+              color: 'white'
             }}>
               {profitLossPercent >= 0 ? '+' : ''}{profitLossPercent.toFixed(2)}%
             </Typography>

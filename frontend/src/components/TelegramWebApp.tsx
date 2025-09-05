@@ -51,7 +51,7 @@ const TelegramWebApp: React.FC<{ children: React.ReactNode }> = ({ children }) =
             bottom: 0,
             left: 0,
             right: 0,
-            bgcolor: '#1565c0', // Темно-синий фон
+            bgcolor: '#0f1419', // Темно-синий как фон приложения
             borderTop: '1px solid',
             borderColor: 'divider',
             zIndex: 1000,

@@ -169,7 +169,7 @@ const Portfolio: React.FC = () => {
             <Typography color="textSecondary" gutterBottom>
               Общая стоимость
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'white' }}>
               ${totalValue.toFixed(2)}
             </Typography>
           </Box>
@@ -181,7 +181,7 @@ const Portfolio: React.FC = () => {
             </Typography>
             <Typography variant="h4" sx={{ 
               fontWeight: 'bold', 
-              color: totalCurrentValue > 0 ? 'success.main' : 'text.secondary' 
+              color: 'white'
             }}>
               ${totalCurrentValue.toFixed(2)}
             </Typography>
@@ -195,7 +195,7 @@ const Portfolio: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="h5" sx={{ 
                 fontWeight: 'bold', 
-                color: totalProfit >= 0 ? 'success.main' : 'error.main' 
+                color: 'white'
               }}>
                 {totalProfit >= 0 ? '📈' : '📉'} ${Math.abs(totalProfit).toFixed(2)}
               </Typography>
@@ -209,7 +209,7 @@ const Portfolio: React.FC = () => {
             </Typography>
             <Typography variant="h5" sx={{ 
               fontWeight: 'bold', 
-              color: profitPercentage >= 0 ? 'success.main' : 'error.main' 
+              color: 'white'
             }}>
               {profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(2)}%
             </Typography>
