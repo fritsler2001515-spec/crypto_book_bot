@@ -42,6 +42,7 @@ const Transactions: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [dateFromFilter, setDateFromFilter] = useState<string>('');
   const [dateToFilter, setDateToFilter] = useState<string>('');
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Для демонстрации используем тестовый Telegram ID
   const testTelegramId = 1042267533;
@@ -147,86 +148,128 @@ const Transactions: React.FC = () => {
       </Typography>
 
       {/* Панель фильтров */}
-      <Card sx={{ bgcolor: 'background.paper', mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <FilterList color="primary" />
-            <Typography variant="h6">
-              Фильтры
-            </Typography>
-            {hasActiveFilters && (
-              <Button
-                size="small"
-                startIcon={<Clear />}
-                onClick={clearFilters}
-                color="secondary"
-              >
-                Очистить
-              </Button>
-            )}
-          </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: 2,
-            alignItems: 'flex-end'
-          }}>
-            {/* Фильтр по типу */}
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Тип операции</InputLabel>
-              <Select
-                value={typeFilter}
-                label="Тип операции"
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <MenuItem value="all">Все</MenuItem>
-                <MenuItem value={TransactionType.BUY}>Покупки</MenuItem>
-                <MenuItem value={TransactionType.SELL}>Продажи</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Фильтр по дате от */}
-            <TextField
-              size="small"
-              label="Дата от"
-              type="date"
-              value={dateFromFilter}
-              onChange={(e) => setDateFromFilter(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={{ minWidth: 140 }}
-            />
-
-            {/* Фильтр по дате до */}
-            <TextField
-              size="small"
-              label="Дата до"
-              type="date"
-              value={dateToFilter}
-              onChange={(e) => setDateToFilter(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={{ minWidth: 140 }}
-            />
-          </Box>
-          
-          {/* Показать количество отфильтрованных транзакций */}
-          {hasActiveFilters && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" color="textSecondary">
-                Показано: {filteredTransactions.length} из {transactions.length} транзакций
+      <Card sx={{ 
+        bgcolor: 'background.paper', 
+        mb: 3,
+        borderRadius: 3,
+        overflow: 'hidden'
+      }}>
+        <CardContent sx={{ pb: filtersExpanded ? 3 : 2 }}>
+          {/* Заголовок фильтров с кнопкой раскрытия */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              cursor: 'pointer'
+            }}
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FilterList color="primary" />
+              <Typography variant="h6">
+                Фильтры
               </Typography>
+              {hasActiveFilters && (
+                <Chip
+                  label={`${filteredTransactions.length}/${transactions.length}`}
+                  color="primary"
+                  size="small"
+                  variant="outlined"
+                />
+              )}
             </Box>
-          )}
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {hasActiveFilters && (
+                <Button
+                  size="small"
+                  startIcon={<Clear />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearFilters();
+                  }}
+                  color="secondary"
+                >
+                  Очистить
+                </Button>
+              )}
+              <IconButton size="small">
+                {filtersExpanded ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            </Box>
+          </Box>
+          
+          {/* Раскрываемая часть с фильтрами */}
+          <Collapse in={filtersExpanded}>
+            <Box sx={{ mt: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: 2,
+                alignItems: 'flex-end'
+              }}>
+                {/* Фильтр по типу */}
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>Тип операции</InputLabel>
+                  <Select
+                    value={typeFilter}
+                    label="Тип операции"
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">Все</MenuItem>
+                    <MenuItem value={TransactionType.BUY}>Покупки</MenuItem>
+                    <MenuItem value={TransactionType.SELL}>Продажи</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Фильтр по дате от */}
+                <TextField
+                  size="small"
+                  label="Дата от"
+                  type="date"
+                  value={dateFromFilter}
+                  onChange={(e) => setDateFromFilter(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{ minWidth: 140 }}
+                />
+
+                {/* Фильтр по дате до */}
+                <TextField
+                  size="small"
+                  label="Дата до"
+                  type="date"
+                  value={dateToFilter}
+                  onChange={(e) => setDateToFilter(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{ minWidth: 140 }}
+                />
+              </Box>
+              
+              {/* Показать количество отфильтрованных транзакций */}
+              {hasActiveFilters && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Показано: {filteredTransactions.length} из {transactions.length} транзакций
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Collapse>
         </CardContent>
       </Card>
 
       {/* Статистика */}
       <Box sx={{ mb: 4 }}>
-        <Card sx={{ bgcolor: 'background.paper' }}>
+        <Card sx={{ 
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          overflow: 'hidden'
+        }}>
           <CardContent>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Box>

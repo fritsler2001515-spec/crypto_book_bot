@@ -13,7 +13,7 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#00d4aa',
+      main: '#2196f3', // Синий цвет вместо бирюзового
     },
     secondary: {
       main: '#ff6b35',
