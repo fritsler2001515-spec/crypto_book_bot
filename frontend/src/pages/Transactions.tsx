@@ -11,6 +11,12 @@ import {
   IconButton,
   Divider,
   Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Button,
 } from '@mui/material';
 import { 
   Receipt as ReceiptIcon, 
@@ -19,7 +25,9 @@ import {
   ExpandMore,
   ExpandLess,
   AccessTime,
-  AttachMoney
+  AttachMoney,
+  FilterList,
+  Clear
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 import { Transaction, TransactionType } from '../types';
@@ -29,6 +37,11 @@ const Transactions: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+  
+  // Состояние фильтров
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFromFilter, setDateFromFilter] = useState<string>('');
+  const [dateToFilter, setDateToFilter] = useState<string>('');
 
   // Для демонстрации используем тестовый Telegram ID
   const testTelegramId = 1042267533;
@@ -73,6 +86,44 @@ const Transactions: React.FC = () => {
     setExpandedCards(newExpandedCards);
   };
 
+  // Фильтрация транзакций
+  const filteredTransactions = transactions.filter(transaction => {
+    // Фильтр по типу
+    if (typeFilter !== 'all' && transaction.transaction_type !== typeFilter) {
+      return false;
+    }
+    
+    // Фильтр по дате
+    if (dateFromFilter || dateToFilter) {
+      const transactionDate = transaction.timestamp ? new Date(transaction.timestamp) : new Date();
+      
+      if (dateFromFilter) {
+        const fromDate = new Date(dateFromFilter);
+        if (transactionDate < fromDate) {
+          return false;
+        }
+      }
+      
+      if (dateToFilter) {
+        const toDate = new Date(dateToFilter);
+        toDate.setHours(23, 59, 59, 999); // Конец дня
+        if (transactionDate > toDate) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  });
+
+  const clearFilters = () => {
+    setTypeFilter('all');
+    setDateFromFilter('');
+    setDateToFilter('');
+  };
+
+  const hasActiveFilters = typeFilter !== 'all' || dateFromFilter || dateToFilter;
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -95,6 +146,84 @@ const Transactions: React.FC = () => {
         📋 Транзакции
       </Typography>
 
+      {/* Панель фильтров */}
+      <Card sx={{ bgcolor: 'background.paper', mb: 3 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <FilterList color="primary" />
+            <Typography variant="h6">
+              Фильтры
+            </Typography>
+            {hasActiveFilters && (
+              <Button
+                size="small"
+                startIcon={<Clear />}
+                onClick={clearFilters}
+                color="secondary"
+              >
+                Очистить
+              </Button>
+            )}
+          </Box>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: 2,
+            alignItems: 'flex-end'
+          }}>
+            {/* Фильтр по типу */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Тип операции</InputLabel>
+              <Select
+                value={typeFilter}
+                label="Тип операции"
+                onChange={(e) => setTypeFilter(e.target.value)}
+              >
+                <MenuItem value="all">Все</MenuItem>
+                <MenuItem value={TransactionType.BUY}>Покупки</MenuItem>
+                <MenuItem value={TransactionType.SELL}>Продажи</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Фильтр по дате от */}
+            <TextField
+              size="small"
+              label="Дата от"
+              type="date"
+              value={dateFromFilter}
+              onChange={(e) => setDateFromFilter(e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={{ minWidth: 140 }}
+            />
+
+            {/* Фильтр по дате до */}
+            <TextField
+              size="small"
+              label="Дата до"
+              type="date"
+              value={dateToFilter}
+              onChange={(e) => setDateToFilter(e.target.value)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={{ minWidth: 140 }}
+            />
+          </Box>
+          
+          {/* Показать количество отфильтрованных транзакций */}
+          {hasActiveFilters && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="textSecondary">
+                Показано: {filteredTransactions.length} из {transactions.length} транзакций
+              </Typography>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Статистика */}
       <Box sx={{ mb: 4 }}>
         <Card sx={{ bgcolor: 'background.paper' }}>
@@ -105,15 +234,15 @@ const Transactions: React.FC = () => {
                   Общая статистика
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Всего транзакций: {transactions.length}
+                  {hasActiveFilters ? `Показано: ${filteredTransactions.length} из ${transactions.length}` : `Всего транзакций: ${transactions.length}`}
                 </Typography>
               </Box>
               <Box textAlign="right">
                 <Typography variant="h6" color="primary.main">
-                  ${totalSpent.toFixed(2)}
+                  ${filteredTransactions.reduce((sum, tx) => sum + (Number(tx.total_spent) || 0), 0).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Общая сумма
+                  {hasActiveFilters ? 'Сумма отфильтрованных' : 'Общая сумма'}
                 </Typography>
               </Box>
             </Box>
@@ -141,9 +270,23 @@ const Transactions: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
+        ) : filteredTransactions.length === 0 ? (
+          <Card sx={{ bgcolor: 'background.paper' }}>
+            <CardContent>
+              <Box textAlign="center" py={4}>
+                <FilterList sx={{ fontSize: 60, color: 'textSecondary', mb: 2 }} />
+                <Typography variant="h6" color="textSecondary" gutterBottom>
+                  Нет транзакций по выбранным фильтрам
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Попробуйте изменить критерии фильтрации
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {transactions.map((transaction, index) => {
+            {filteredTransactions.map((transaction, index) => {
               const isExpanded = expandedCards.has(transaction.id || index);
               const totalAmount = Number(transaction.total_spent) || Number(transaction.quantity) * Number(transaction.price);
 
