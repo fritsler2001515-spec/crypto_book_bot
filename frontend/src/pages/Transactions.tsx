@@ -411,7 +411,7 @@ const Transactions: React.FC = () => {
                       <Divider sx={{ mb: 2 }} />
                       <Box sx={{ 
                         display: 'grid', 
-                        gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' }, 
+                        gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }, 
                         gap: 2 
                       }}>
                         <Box>
@@ -448,14 +448,6 @@ const Transactions: React.FC = () => {
                           </Typography>
                           <Typography variant="body1" fontWeight="medium">
                             {transaction.timestamp ? formatDate(transaction.timestamp) : 'Сегодня'}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="textSecondary" gutterBottom>
-                            ID транзакции
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            #{transaction.id || 'N/A'}
                           </Typography>
                         </Box>
                         <Box>

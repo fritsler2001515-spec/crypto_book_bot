@@ -51,7 +51,7 @@ const TelegramWebApp: React.FC<{ children: React.ReactNode }> = ({ children }) =
             bottom: 0,
             left: 0,
             right: 0,
-            bgcolor: 'background.paper',
+            bgcolor: '#1565c0', // Темно-синий фон
             borderTop: '1px solid',
             borderColor: 'divider',
             zIndex: 1000,
@@ -76,9 +76,10 @@ const TelegramWebApp: React.FC<{ children: React.ReactNode }> = ({ children }) =
                 minWidth: 'auto',
                 px: 1,
                 py: 1,
-                color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
+                color: location.pathname === item.path ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                 '&:hover': {
-                  bgcolor: 'rgba(0, 212, 170, 0.1)',
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
                 },
               }}
             >

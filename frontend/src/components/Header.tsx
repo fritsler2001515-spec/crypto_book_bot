@@ -47,7 +47,7 @@ const Header: React.FC = () => {
               sx={{
                 color: location.pathname === item.path ? 'primary.main' : 'text.primary',
                 '&:hover': {
-                  bgcolor: 'rgba(0, 212, 170, 0.1)',
+                  bgcolor: 'rgba(33, 150, 243, 0.1)', // Синий hover вместо бирюзового
                 },
               }}
             >
