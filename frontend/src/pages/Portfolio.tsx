@@ -159,10 +159,18 @@ const Portfolio: React.FC = () => {
         mb: 4, 
         borderRadius: 3,
         overflow: 'hidden',
-        border: 'none', // Убираем границу
-        boxShadow: 'none', // Убираем тень
+        border: 'none !important', // Принудительно убираем границу
+        boxShadow: 'none !important', // Принудительно убираем тень
+        outline: 'none !important', // Убираем outline
+        '&::before': { display: 'none' }, // Убираем псевдоэлементы
+        '&::after': { display: 'none' },
+        '& .MuiCard-root': {
+          border: 'none !important',
+          boxShadow: 'none !important'
+        },
         '& .MuiCardContent-root': {
-          backgroundColor: '#1a252f !important'
+          backgroundColor: '#1a252f !important',
+          border: 'none !important'
         }
       }}>
         <CardContent sx={{ 
