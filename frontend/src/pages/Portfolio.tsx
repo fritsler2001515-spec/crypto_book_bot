@@ -155,7 +155,7 @@ const Portfolio: React.FC = () => {
 
       {/* Общая статистика */}
       <Card sx={{ 
-        bgcolor: 'background.paper', 
+        bgcolor: '#1e2a3a', // Темно-серо-синий цвет
         mb: 4, 
         borderRadius: 3,
         overflow: 'hidden'
