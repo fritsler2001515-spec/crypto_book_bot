@@ -261,18 +261,28 @@ const Portfolio: React.FC = () => {
                   <Card 
                     key={item.id}
                     sx={{ 
-                      bgcolor: 'background.paper',
+                      bgcolor: '#1a252f !important',
+                      border: 'none !important',
+                      boxShadow: 'none !important',
                       borderRadius: 3,
                       overflow: 'hidden',
                       cursor: 'pointer',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      transition: 'transform 0.2s',
                       '&:hover': {
                         transform: 'translateY(-2px)',
-                        boxShadow: 4,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.3) !important',
+                      },
+                      '& .MuiCardContent-root': {
+                        backgroundColor: '#1a252f !important',
+                        border: 'none !important'
                       }
                     }}>
                     <CardContent 
-                      sx={{ p: 3 }}
+                      sx={{ 
+                        p: 3,
+                        backgroundColor: '#1a252f !important',
+                        border: 'none !important'
+                      }}
                       onClick={() => toggleCardExpansion(item.id)}
                     >
                       {/* Основная информация - всегда видна */}
