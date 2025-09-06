@@ -155,17 +155,19 @@ const Portfolio: React.FC = () => {
 
       {/* Общая статистика */}
       <Card sx={{ 
-        bgcolor: '#34495e !important', // Принудительно устанавливаем цвет
+        bgcolor: '#1a252f !important', // Более темный цвет
         mb: 4, 
-        borderRadius: 0,
+        borderRadius: 3,
         overflow: 'hidden',
+        border: 'none', // Убираем границу
+        boxShadow: 'none', // Убираем тень
         '& .MuiCardContent-root': {
-          backgroundColor: '#34495e !important'
+          backgroundColor: '#1a252f !important'
         }
       }}>
         <CardContent sx={{ 
           p: 3,
-          backgroundColor: '#34495e !important'
+          backgroundColor: '#1a252f !important'
         }}>
           {/* Общая стоимость */}
           <Box sx={{ mb: 3 }}>
