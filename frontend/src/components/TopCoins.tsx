@@ -99,7 +99,17 @@ const TopCoins: React.FC<TopCoinsProps> = ({ coins, loading, error }) => {
   }
 
   return (
-    <Card sx={{ bgcolor: 'background.paper', mb: 3 }}>
+    <Card sx={{ 
+      bgcolor: '#1a252f !important',
+      border: 'none !important',
+      boxShadow: 'none !important',
+      borderRadius: 3,
+      mb: 3,
+      '& .MuiCardContent-root': {
+        backgroundColor: '#1a252f !important',
+        border: 'none !important'
+      }
+    }}>
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">

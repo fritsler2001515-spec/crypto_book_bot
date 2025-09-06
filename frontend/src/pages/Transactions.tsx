@@ -146,10 +146,16 @@ const Transactions: React.FC = () => {
 
       {/* Панель фильтров */}
       <Card sx={{ 
-        bgcolor: 'background.paper', 
+        bgcolor: '#1a252f !important',
         mb: 3,
         borderRadius: 3,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        border: 'none !important',
+        boxShadow: 'none !important',
+        '& .MuiCardContent-root': {
+          backgroundColor: '#1a252f !important',
+          border: 'none !important'
+        }
       }}>
         <CardContent sx={{ pb: filtersExpanded ? 3 : 2 }}>
           {/* Заголовок фильтров с кнопкой раскрытия */}
@@ -263,9 +269,15 @@ const Transactions: React.FC = () => {
       {/* Статистика */}
       <Box sx={{ mb: 4 }}>
         <Card sx={{ 
-          bgcolor: 'background.paper',
+          bgcolor: '#1a252f !important',
           borderRadius: 3,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          border: 'none !important',
+          boxShadow: 'none !important',
+          '& .MuiCardContent-root': {
+            backgroundColor: '#1a252f !important',
+            border: 'none !important'
+          }
         }}>
           <CardContent>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -334,7 +346,9 @@ const Transactions: React.FC = () => {
                 <Card 
                   key={transaction.id || index}
                   sx={{ 
-                    bgcolor: 'background.paper',
+                    bgcolor: '#1a252f !important',
+        border: 'none !important',
+        boxShadow: 'none !important',
                     borderRadius: 3,
                     overflow: 'hidden',
                     cursor: 'pointer',

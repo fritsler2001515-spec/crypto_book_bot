@@ -175,9 +175,6 @@ const AddCoin: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', mb: 4 }}>
-        ➕ Добавить монету
-      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -191,7 +188,12 @@ const AddCoin: React.FC = () => {
         </Alert>
       )}
 
-      <Card sx={{ bgcolor: 'background.paper' }}>
+      <Card sx={{ 
+        bgcolor: '#1a252f !important',
+        border: 'none !important',
+        boxShadow: 'none !important',
+        borderRadius: 3
+      }}>
         <CardContent>
           <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
             {steps.map((label) => (
@@ -238,7 +240,13 @@ const AddCoin: React.FC = () => {
 
       {/* Предварительный просмотр */}
       {activeStep > 0 && (
-        <Card sx={{ bgcolor: 'background.paper', mt: 3 }}>
+        <Card sx={{ 
+          bgcolor: '#1a252f !important',
+          border: 'none !important',
+          boxShadow: 'none !important',
+          borderRadius: 3,
+          mt: 3
+        }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
               Предварительный просмотр
