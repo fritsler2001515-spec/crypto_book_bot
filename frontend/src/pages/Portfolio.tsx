@@ -152,9 +152,6 @@ const Portfolio: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', mb: 4 }}>
-        💼 Портфель
-      </Typography>
 
       {/* Общая статистика */}
       <Card sx={{ 
@@ -169,7 +166,7 @@ const Portfolio: React.FC = () => {
             <Typography color="textSecondary" gutterBottom>
               Общая стоимость
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'white' }}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'white' }}>
               ${totalValue.toFixed(2)}
             </Typography>
           </Box>
@@ -179,7 +176,7 @@ const Portfolio: React.FC = () => {
             <Typography color="textSecondary" gutterBottom>
               Текущая стоимость
             </Typography>
-            <Typography variant="h4" sx={{ 
+            <Typography variant="h5" sx={{ 
               fontWeight: 'bold', 
               color: 'white'
             }}>
@@ -193,7 +190,7 @@ const Portfolio: React.FC = () => {
               Прибыль/Убыток
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h5" sx={{ 
+              <Typography variant="h6" sx={{ 
                 fontWeight: 'bold', 
                 color: 'white'
               }}>
@@ -207,7 +204,7 @@ const Portfolio: React.FC = () => {
             <Typography color="textSecondary" gutterBottom>
               Процент изменения
             </Typography>
-            <Typography variant="h5" sx={{ 
+            <Typography variant="h6" sx={{ 
               fontWeight: 'bold', 
               color: 'white'
             }}>

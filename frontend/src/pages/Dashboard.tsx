@@ -159,66 +159,6 @@ const Dashboard: React.FC = () => {
         📊 Дашборд
       </Typography>
 
-      {/* Статистика портфеля */}
-      <Card sx={{ 
-        bgcolor: 'background.paper', 
-        mb: 4, 
-        borderRadius: 3,
-        overflow: 'hidden'
-      }}>
-        <CardContent sx={{ p: 3 }}>
-          {/* Общая стоимость */}
-          <Box sx={{ mb: 3 }}>
-            <Typography color="textSecondary" gutterBottom>
-              Общая стоимость
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'white' }}>
-              ${totalSpent.toFixed(2)}
-            </Typography>
-          </Box>
-
-          {/* Текущая стоимость */}
-          <Box sx={{ mb: 3 }}>
-            <Typography color="textSecondary" gutterBottom>
-              Текущая стоимость
-            </Typography>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 'bold', 
-              color: 'white'
-            }}>
-              ${currentValue.toFixed(2)}
-            </Typography>
-          </Box>
-
-          {/* Прибыль/Убыток */}
-          <Box sx={{ mb: 3 }}>
-            <Typography color="textSecondary" gutterBottom>
-              Прибыль/Убыток
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="h5" sx={{ 
-                fontWeight: 'bold', 
-                color: 'white'
-              }}>
-                {profitLoss >= 0 ? '📈' : '📉'} ${Math.abs(profitLoss).toFixed(2)}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Процент изменения */}
-          <Box>
-            <Typography color="textSecondary" gutterBottom>
-              Процент изменения
-            </Typography>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 'bold', 
-              color: 'white'
-            }}>
-              {profitLossPercent >= 0 ? '+' : ''}{profitLossPercent.toFixed(2)}%
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
 
       {/* Рыночные данные */}
       <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>

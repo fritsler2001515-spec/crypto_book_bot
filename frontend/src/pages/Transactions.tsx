@@ -143,9 +143,6 @@ const Transactions: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', mb: 4 }}>
-        📋 Транзакции
-      </Typography>
 
       {/* Панель фильтров */}
       <Card sx={{ 
@@ -281,7 +278,7 @@ const Transactions: React.FC = () => {
                 </Typography>
               </Box>
               <Box textAlign="right">
-                <Typography variant="h6" color="primary.main">
+                <Typography variant="h6" color="white">
                   ${filteredTransactions.reduce((sum, tx) => sum + (Number(tx.total_spent) || 0), 0).toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
