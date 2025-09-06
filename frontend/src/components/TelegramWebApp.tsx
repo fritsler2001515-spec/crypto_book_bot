@@ -44,17 +44,17 @@ const TelegramWebApp: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
       {/* Навигационные кнопки внизу - только в Telegram Web App */}
       {isTelegramWebApp && (
-        <Paper
-          elevation={8}
+        <Box
           sx={{
             position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
-            bgcolor: '#0f1419', // Темно-синий как фон приложения
+            bgcolor: '#1a1a1a !important', // Темно-серый фон как на скриншоте
             borderTop: '1px solid',
             borderColor: 'divider',
             zIndex: 1000,
+            boxShadow: '0px -2px 10px rgba(0,0,0,0.3)', // Тень вместо Paper elevation
           }}
         >
         <Box
@@ -94,7 +94,7 @@ const TelegramWebApp: React.FC<{ children: React.ReactNode }> = ({ children }) =
             </Button>
           ))}
         </Box>
-        </Paper>
+        </Box>
       )}
     </Box>
   );
