@@ -76,10 +76,10 @@ const TelegramWebApp: React.FC<{ children: React.ReactNode }> = ({ children }) =
                 minWidth: 'auto',
                 px: 1,
                 py: 1,
-                color: location.pathname === item.path ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                color: location.pathname === item.path ? '#2196f3' : 'rgba(255, 255, 255, 0.7)', // Активная кнопка синяя
                 '&:hover': {
                   bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  color: '#ffffff',
+                  color: '#2196f3', // Hover тоже синий
                 },
               }}
             >
