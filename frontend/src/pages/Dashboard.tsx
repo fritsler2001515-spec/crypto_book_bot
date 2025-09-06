@@ -155,9 +155,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', mb: 4 }}>
-        📊 Дашборд
-      </Typography>
 
 
       {/* Рыночные данные */}

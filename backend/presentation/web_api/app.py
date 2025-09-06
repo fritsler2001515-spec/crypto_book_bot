@@ -535,8 +535,13 @@ async def get_top_coins(limit: int = 10, response: Response = None):
         response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
+        import asyncio
+        # Добавляем timeout для предотвращения зависания
         async with CoinGeckoAPI() as api:
-            coins = await api.get_top_coins(limit)
+            coins = await asyncio.wait_for(
+                api.get_top_coins(limit),
+                timeout=10.0  # 10 секунд timeout
+            )
             if coins:
                 return [
                     CoinDataResponse(
@@ -552,6 +557,8 @@ async def get_top_coins(limit: int = 10, response: Response = None):
                     )
                     for coin in coins
                 ]
+    except asyncio.TimeoutError:
+        print("Timeout при получении топ монет")
     except Exception as e:
         print(f"Ошибка при получении топ монет: {e}")
     
@@ -592,8 +599,13 @@ async def get_growth_leaders(limit: int = 5, response: Response = None):
         response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
+        import asyncio
+        # Добавляем timeout для предотвращения зависания
         async with CoinGeckoAPI() as api:
-            coins = await api.get_growth_leaders(limit)
+            coins = await asyncio.wait_for(
+                api.get_growth_leaders(limit),
+                timeout=10.0  # 10 секунд timeout
+            )
             if coins:
                 return [
                     CoinDataResponse(
@@ -609,6 +621,8 @@ async def get_growth_leaders(limit: int = 5, response: Response = None):
                     )
                     for coin in coins
                 ]
+    except asyncio.TimeoutError:
+        print("Timeout при получении лидеров роста")
     except Exception as e:
         print(f"Ошибка при получении лидеров роста: {e}")
     
