@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
         // Получаем данные параллельно
         const [leaders, top] = await Promise.all([
           apiService.getGrowthLeaders(5),
-          apiService.getTopCoins(10)
+          apiService.getTopCoins(100)
         ]);
         
         setGrowthLeaders(leaders);

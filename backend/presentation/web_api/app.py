@@ -525,7 +525,7 @@ async def get_transactions(
         raise HTTPException(status_code=500, detail=f"Ошибка при получении транзакций: {str(e)}")
 
 @api_router.get("/market/top-coins", response_model=List[CoinDataResponse])
-async def get_top_coins(limit: int = 10, response: Response = None):
+async def get_top_coins(limit: int = 100, response: Response = None):
     """Получить топ монет по рыночной капитализации"""
     
     # Добавляем CORS заголовки
