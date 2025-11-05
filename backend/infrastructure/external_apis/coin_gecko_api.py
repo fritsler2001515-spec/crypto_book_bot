@@ -51,11 +51,11 @@ class CoinGeckoAPI:
             url = f"{self.base_url}/coins/markets"
             params = {
                 'vs_currency': 'usd',
-                'order': 'percent_change_24h_desc',  # Сортировка по росту за 24ч
-                'per_page': limit,
+                'order': 'price_change_percentage_24h_desc',  # Правильная сортировка по росту за 24ч
+                'per_page': limit * 3,  # Берем больше монет для фильтрации
                 'page': 1,
                 'sparkline': 'false',
-                'locale': 'ru'
+                'price_change_percentage': '24h'  # Включаем данные о изменении цены
             }
             
             if not self.session:
@@ -330,6 +330,58 @@ class CoinGeckoAPI:
         except Exception as e:
             print(f"Ошибка при получении цен: {e}")
             return {}
+    
+    async def _fetch_growth_leaders_data(self, session: aiohttp.ClientSession, url: str, params: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
+        """Получить данные лидеров роста с фильтрацией"""
+        try:
+            # Добавляем задержку перед запросом для избежания rate limit
+            await asyncio.sleep(1)
+            
+            async with session.get(url, params=params) as response:
+                if response.status == 429:
+                    print("Rate limit превышен. Ожидание 10 секунд...")
+                    await asyncio.sleep(10)
+                    return []
+                elif response.status != 200:
+                    error_text = await response.text()
+                    print(f"HTTP {response.status}: {error_text}")
+                    return []
+                
+                data = await response.json()
+                
+                if not data:
+                    return []
+                
+                # Фильтруем только монеты с положительным ростом
+                growth_leaders = []
+                for coin in data:
+                    try:
+                        price_change = coin.get('price_change_percentage_24h', 0)
+                        if price_change > 0:  # Только с положительным ростом
+                            growth_leaders.append({
+                                'id': coin['id'],
+                                'symbol': coin['symbol'].upper(),
+                                'name': coin['name'],
+                                'current_price': coin['current_price'],
+                                'market_cap': coin['market_cap'],
+                                'market_cap_rank': coin['market_cap_rank'],
+                                'price_change_percentage_24h': coin['price_change_percentage_24h'],
+                                'image': coin['image'],
+                                'total_volume': coin['total_volume']
+                            })
+                            
+                            if len(growth_leaders) >= limit:
+                                break
+                    except (KeyError, TypeError) as e:
+                        print(f"Ошибка обработки монеты: {e}")
+                        continue
+                
+                print(f"Найдено лидеров роста: {len(growth_leaders)}")
+                return growth_leaders
+                
+        except Exception as e:
+            print(f"Ошибка при получении лидеров роста: {e}")
+            return []
 
 
 # Синхронная версия для обратной совместимости
