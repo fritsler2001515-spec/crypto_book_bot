@@ -61,8 +61,8 @@ class CoinGeckoAPI:
             if not self.session:
                 connector = aiohttp.TCPConnector(ssl=False)
                 async with aiohttp.ClientSession(connector=connector) as session:
-                    return await self._fetch_coins_data(session, url, params)
-            return await self._fetch_coins_data(self.session, url, params)
+                    return await self._fetch_growth_leaders_data(session, url, params, limit)
+            return await self._fetch_growth_leaders_data(self.session, url, params, limit)
             
         except Exception as e:
             print(f"Ошибка при получении лидеров роста: {e}")
