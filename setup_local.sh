@@ -142,3 +142,4 @@ echo "   - Создайте нового бота: /newbot"
 echo "   - Скопируйте токен в backend/.env"
 echo ""
 
+
