@@ -71,28 +71,32 @@ class CoinGeckoAPI:
     async def _fetch_coins_data(self, session: aiohttp.ClientSession, url: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Получить данные о монетах"""
         try:
-            # Добавляем задержку перед запросом для избежания rate limit
-            await asyncio.sleep(1)
+            print(f"🌐 Запрос к CoinGecko API: {url}")
+            print(f"📊 Параметры: {params}")
             
-            async with session.get(url, params=params) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                print(f"📡 Получен ответ: HTTP {response.status}")
+                
                 if response.status == 429:
-                    print("Rate limit превышен. Ожидание 10 секунд...")
+                    print("⚠️ Rate limit превышен. Ожидание 10 секунд...")
                     await asyncio.sleep(10)
                     return []
                 elif response.status != 200:
                     error_text = await response.text()
-                    print(f"HTTP {response.status}: {error_text}")
+                    print(f"❌ HTTP {response.status}: {error_text}")
                     return []
                 
                 data = await response.json()
+                print(f"📦 Получено данных: {len(data) if data else 0} монет")
                 
                 if not data:
+                    print("⚠️ Пустой ответ от API")
                     return []
                 
                 result = []
                 for coin in data:
                     try:
-                        result.append({
+                        coin_data = {
                             'id': coin['id'],
                             'symbol': coin['symbol'].upper(),
                             'name': coin['name'],
@@ -102,15 +106,22 @@ class CoinGeckoAPI:
                             'price_change_percentage_24h': coin['price_change_percentage_24h'],
                             'image': coin['image'],
                             'total_volume': coin['total_volume']
-                        })
+                        }
+                        result.append(coin_data)
                     except KeyError as e:
-                        print(f"Отсутствует поле {e} в данных монеты")
+                        print(f"⚠️ Отсутствует поле {e} в данных монеты {coin.get('id', 'unknown')}")
                         continue
                 
+                print(f"✅ Обработано успешно: {len(result)} монет")
                 return result
                 
+        except asyncio.TimeoutError:
+            print("⏱️ Timeout при получении данных о монетах")
+            return []
         except Exception as e:
-            print(f"Ошибка при получении данных о монетах: {e}")
+            print(f"❌ Ошибка при получении данных о монетах: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     async def get_price_by_name(self, coin_name: str) -> Optional[Decimal]:
@@ -334,22 +345,26 @@ class CoinGeckoAPI:
     async def _fetch_growth_leaders_data(self, session: aiohttp.ClientSession, url: str, params: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
         """Получить данные лидеров роста с фильтрацией"""
         try:
-            # Добавляем задержку перед запросом для избежания rate limit
-            await asyncio.sleep(1)
+            print(f"🌐 Запрос лидеров роста к CoinGecko API: {url}")
+            print(f"📊 Параметры: {params}")
             
-            async with session.get(url, params=params) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                print(f"📡 Получен ответ: HTTP {response.status}")
+                
                 if response.status == 429:
-                    print("Rate limit превышен. Ожидание 10 секунд...")
+                    print("⚠️ Rate limit превышен. Ожидание 10 секунд...")
                     await asyncio.sleep(10)
                     return []
                 elif response.status != 200:
                     error_text = await response.text()
-                    print(f"HTTP {response.status}: {error_text}")
+                    print(f"❌ HTTP {response.status}: {error_text}")
                     return []
                 
                 data = await response.json()
+                print(f"📦 Получено данных: {len(data) if data else 0} монет")
                 
                 if not data:
+                    print("⚠️ Пустой ответ от API")
                     return []
                 
                 # Фильтруем только монеты с положительным ростом
@@ -357,7 +372,7 @@ class CoinGeckoAPI:
                 for coin in data:
                     try:
                         price_change = coin.get('price_change_percentage_24h', 0)
-                        if price_change > 0:  # Только с положительным ростом
+                        if price_change and price_change > 0:  # Только с положительным ростом
                             growth_leaders.append({
                                 'id': coin['id'],
                                 'symbol': coin['symbol'].upper(),
@@ -373,14 +388,19 @@ class CoinGeckoAPI:
                             if len(growth_leaders) >= limit:
                                 break
                     except (KeyError, TypeError) as e:
-                        print(f"Ошибка обработки монеты: {e}")
+                        print(f"⚠️ Ошибка обработки монеты: {e}")
                         continue
                 
-                print(f"Найдено лидеров роста: {len(growth_leaders)}")
+                print(f"✅ Найдено лидеров роста: {len(growth_leaders)}")
                 return growth_leaders
                 
+        except asyncio.TimeoutError:
+            print("⏱️ Timeout при получении лидеров роста")
+            return []
         except Exception as e:
-            print(f"Ошибка при получении лидеров роста: {e}")
+            print(f"❌ Ошибка при получении лидеров роста: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
 

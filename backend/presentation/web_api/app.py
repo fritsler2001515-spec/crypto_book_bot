@@ -546,11 +546,15 @@ async def get_top_coins(
         # Проверяем, актуален ли кэш (обновляем каждые 5 минут)
         is_fresh = await cache_repo.is_cache_fresh('top_coins', max_age_minutes=5)
         
+        print(f"🔍 Проверка кэша топ монет: свежий={is_fresh}")
+        
         if is_fresh:
             print("📦 Используем кэшированные данные топ монет")
             cached_coins = await cache_repo.get_cached_coins('top_coins', limit)
+            print(f"📊 Получено из кэша: {len(cached_coins)} монет")
+            
             if cached_coins:
-                return [
+                result = [
                     CoinDataResponse(
                         id=coin['id'],
                         symbol=coin['symbol'],
@@ -564,6 +568,8 @@ async def get_top_coins(
                     )
                     for coin in cached_coins
                 ]
+                print(f"✅ Возвращаем {len(result)} монет из кэша")
+                return result
         
         # Если кэш устарел, обновляем данные из API
         print("🔄 Обновляем кэш топ монет из API")
