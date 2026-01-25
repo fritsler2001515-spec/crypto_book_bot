@@ -30,7 +30,7 @@ const AddCoin: React.FC = () => {
     quantity: 0,
     price: 0,
   });
-  
+
   // Строковые значения для полей ввода чисел
   const [quantityInput, setQuantityInput] = useState('');
   const [priceInput, setPriceInput] = useState('');

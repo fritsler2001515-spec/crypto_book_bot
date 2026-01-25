@@ -352,7 +352,7 @@ async def get_user(
 
 @api_router.get("/portfolio/{telegram_id}")
 async def get_portfolio(
-    telegram_id: int, 
+    telegram_id: int,
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
     portfolio_repo: SQLAlchemyPortfolioRepository = Depends(get_portfolio_repository)
 ):
@@ -543,20 +543,20 @@ async def get_top_coins(limit: int = 100, response: Response = None):
                 timeout=10.0  # 10 секунд timeout
             )
             if coins:
-                return [
-                    CoinDataResponse(
-                        id=coin['id'],
-                        symbol=coin['symbol'],
-                        name=coin['name'],
-                        current_price=coin['current_price'],
-                        market_cap=coin['market_cap'],
-                        market_cap_rank=coin['market_cap_rank'],
-                        price_change_percentage_24h=coin['price_change_percentage_24h'],
-                        image=coin['image'],
-                        total_volume=coin['total_volume']
-                    )
-                    for coin in coins
-                ]
+            return [
+                CoinDataResponse(
+                    id=coin['id'],
+                    symbol=coin['symbol'],
+                    name=coin['name'],
+                    current_price=coin['current_price'],
+                    market_cap=coin['market_cap'],
+                    market_cap_rank=coin['market_cap_rank'],
+                    price_change_percentage_24h=coin['price_change_percentage_24h'],
+                    image=coin['image'],
+                    total_volume=coin['total_volume']
+                )
+                for coin in coins
+            ]
     except asyncio.TimeoutError:
         print("Timeout при получении топ монет")
     except Exception as e:
@@ -607,20 +607,20 @@ async def get_growth_leaders(limit: int = 5, response: Response = None):
                 timeout=15.0  # Увеличиваем timeout до 15 секунд
             )
             if coins:
-                return [
-                    CoinDataResponse(
-                        id=coin['id'],
-                        symbol=coin['symbol'],
-                        name=coin['name'],
-                        current_price=coin['current_price'],
-                        market_cap=coin['market_cap'],
-                        market_cap_rank=coin['market_cap_rank'],
-                        price_change_percentage_24h=coin['price_change_percentage_24h'],
-                        image=coin['image'],
-                        total_volume=coin['total_volume']
-                    )
-                    for coin in coins
-                ]
+            return [
+                CoinDataResponse(
+                    id=coin['id'],
+                    symbol=coin['symbol'],
+                    name=coin['name'],
+                    current_price=coin['current_price'],
+                    market_cap=coin['market_cap'],
+                    market_cap_rank=coin['market_cap_rank'],
+                    price_change_percentage_24h=coin['price_change_percentage_24h'],
+                    image=coin['image'],
+                    total_volume=coin['total_volume']
+                )
+                for coin in coins
+            ]
     except asyncio.TimeoutError:
         print("Timeout при получении лидеров роста")
     except Exception as e:

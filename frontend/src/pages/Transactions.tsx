@@ -172,7 +172,7 @@ const Transactions: React.FC = () => {
               <FilterList color="primary" />
               <Typography variant="h6">
                 Фильтры
-              </Typography>
+      </Typography>
               {hasActiveFilters && (
                 <Chip
                   label={`${filteredTransactions.length}/${transactions.length}`}
@@ -305,21 +305,21 @@ const Transactions: React.FC = () => {
       {/* Транзакции в виде карточек */}
       <Box>
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          История транзакций
-        </Typography>
-        
-        {transactions.length === 0 ? (
+            История транзакций
+          </Typography>
+          
+          {transactions.length === 0 ? (
           <Card sx={{ bgcolor: 'background.paper' }}>
             <CardContent>
-              <Box textAlign="center" py={4}>
-                <ReceiptIcon sx={{ fontSize: 60, color: 'textSecondary', mb: 2 }} />
-                <Typography variant="h6" color="textSecondary" gutterBottom>
-                  Транзакций пока нет
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Добавьте первую монету в портфель
-                </Typography>
-              </Box>
+            <Box textAlign="center" py={4}>
+              <ReceiptIcon sx={{ fontSize: 60, color: 'textSecondary', mb: 2 }} />
+              <Typography variant="h6" color="textSecondary" gutterBottom>
+                Транзакций пока нет
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Добавьте первую монету в портфель
+              </Typography>
+            </Box>
             </CardContent>
           </Card>
         ) : filteredTransactions.length === 0 ? (
@@ -436,10 +436,10 @@ const Transactions: React.FC = () => {
                         <Box>
                           <Typography variant="body2" color="textSecondary" gutterBottom>
                             Цена за единицу
-                          </Typography>
+                        </Typography>
                           <Typography variant="body1" fontWeight="medium">
-                            ${Number(transaction.price).toFixed(2)}
-                          </Typography>
+                          ${Number(transaction.price).toFixed(2)}
+                        </Typography>
                         </Box>
                         <Box>
                           <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -456,26 +456,26 @@ const Transactions: React.FC = () => {
                         <Box>
                           <Typography variant="body2" color="textSecondary" gutterBottom>
                             Дата и время
-                          </Typography>
+                        </Typography>
                           <Typography variant="body1" fontWeight="medium">
-                            {transaction.timestamp ? formatDate(transaction.timestamp) : 'Сегодня'}
-                          </Typography>
+                          {transaction.timestamp ? formatDate(transaction.timestamp) : 'Сегодня'}
+                        </Typography>
                         </Box>
                         <Box>
                           <Typography variant="body2" color="textSecondary" gutterBottom>
                             Статус
                           </Typography>
-                          <Chip
-                            label="Завершена"
-                            color="success"
-                            size="small"
-                            variant="outlined"
-                          />
+                        <Chip
+                          label="Завершена"
+                          color="success"
+                          size="small"
+                          variant="outlined"
+                        />
                         </Box>
                       </Box>
                     </Collapse>
-                  </CardContent>
-                </Card>
+        </CardContent>
+      </Card>
               );
             })}
           </Box>

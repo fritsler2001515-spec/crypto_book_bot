@@ -179,85 +179,85 @@ const Portfolio: React.FC = () => {
         }}>
           {/* Общая стоимость */}
           <Box sx={{ mb: 3 }}>
-            <Typography color="textSecondary" gutterBottom>
-              Общая стоимость
-            </Typography>
+              <Typography color="textSecondary" gutterBottom>
+                Общая стоимость
+              </Typography>
             <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'white' }}>
-              ${totalValue.toFixed(2)}
-            </Typography>
-          </Box>
+                ${totalValue.toFixed(2)}
+              </Typography>
+        </Box>
 
           {/* Текущая стоимость */}
           <Box sx={{ mb: 3 }}>
-            <Typography color="textSecondary" gutterBottom>
-              Текущая стоимость
-            </Typography>
+              <Typography color="textSecondary" gutterBottom>
+                Текущая стоимость
+              </Typography>
             <Typography variant="h5" sx={{ 
               fontWeight: 'bold', 
               color: 'white'
             }}>
-              ${totalCurrentValue.toFixed(2)}
-            </Typography>
-          </Box>
+                ${totalCurrentValue.toFixed(2)}
+              </Typography>
+        </Box>
 
           {/* Прибыль/Убыток */}
           <Box sx={{ mb: 3 }}>
-            <Typography color="textSecondary" gutterBottom>
-              Прибыль/Убыток
-            </Typography>
+              <Typography color="textSecondary" gutterBottom>
+                Прибыль/Убыток
+              </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="h6" sx={{ 
                 fontWeight: 'bold', 
                 color: 'white'
               }}>
                 {totalProfit >= 0 ? '📈' : '📉'} ${Math.abs(totalProfit).toFixed(2)}
-              </Typography>
-            </Box>
-          </Box>
+                </Typography>
+              </Box>
+        </Box>
 
           {/* Процент изменения */}
           <Box>
-            <Typography color="textSecondary" gutterBottom>
-              Процент изменения
-            </Typography>
+              <Typography color="textSecondary" gutterBottom>
+                Процент изменения
+              </Typography>
             <Typography variant="h6" sx={{ 
               fontWeight: 'bold', 
               color: 'white'
             }}>
               {profitPercentage >= 0 ? '+' : ''}{profitPercentage.toFixed(2)}%
-            </Typography>
+              </Typography>
           </Box>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
       {/* Активы в виде карточек */}
       <Box>
         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Активы
-        </Typography>
-        
-        {portfolio.length === 0 ? (
+            Активы
+          </Typography>
+          
+          {portfolio.length === 0 ? (
           <Card sx={{ bgcolor: 'background.paper' }}>
             <CardContent>
-              <Box textAlign="center" py={4}>
-                <Typography variant="h6" color="textSecondary" gutterBottom>
-                  Портфель пуст
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Добавьте первую монету в портфель
-                </Typography>
-              </Box>
+            <Box textAlign="center" py={4}>
+              <Typography variant="h6" color="textSecondary" gutterBottom>
+                Портфель пуст
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Добавьте первую монету в портфель
+              </Typography>
+            </Box>
             </CardContent>
           </Card>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {portfolio.map((item) => {
-              const currentValue = (Number(item.current_price) || 0) * (Number(item.total_quantity) || 0);
-              const profit = currentValue - (Number(item.total_spent) || 0);
-              const profitPercent = (Number(item.total_spent) || 0) > 0 ? (profit / (Number(item.total_spent) || 0)) * 100 : 0;
+                  {portfolio.map((item) => {
+                    const currentValue = (Number(item.current_price) || 0) * (Number(item.total_quantity) || 0);
+                    const profit = currentValue - (Number(item.total_spent) || 0);
+                    const profitPercent = (Number(item.total_spent) || 0) > 0 ? (profit / (Number(item.total_spent) || 0)) * 100 : 0;
               const isExpanded = expandedCards.has(item.id);
 
-              return (
+                    return (
                   <Card 
                     key={item.id}
                     sx={{ 
@@ -318,18 +318,18 @@ const Portfolio: React.FC = () => {
                           {/* Прибыль/убыток */}
                           <Box sx={{ textAlign: 'right' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'flex-end' }}>
-                              {profit >= 0 ? (
-                                <TrendingUp color="success" fontSize="small" />
-                              ) : (
-                                <TrendingDown color="error" fontSize="small" />
-                              )}
-                              <Typography
+                            {profit >= 0 ? (
+                              <TrendingUp color="success" fontSize="small" />
+                            ) : (
+                              <TrendingDown color="error" fontSize="small" />
+                            )}
+                            <Typography
                                 variant="h6"
-                                color={profit >= 0 ? 'success.main' : 'error.main'}
+                              color={profit >= 0 ? 'success.main' : 'error.main'}
                                 fontWeight="bold"
-                              >
+                            >
                                 ${Math.abs(profit).toFixed(2)}
-                              </Typography>
+                            </Typography>
                             </Box>
                             <Chip
                               label={`${profit >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%`}
@@ -419,8 +419,8 @@ const Portfolio: React.FC = () => {
                       </Collapse>
                     </CardContent>
                   </Card>
-              );
-            })}
+                    );
+                  })}
           </Box>
         )}
       </Box>

@@ -44,7 +44,7 @@ class PortfolioRepository(ABC):
     async def get_portfolio_item(self, user_id: int, symbol: str) -> Optional[UserPortfolio]:
         """Получить конкретную монету из портфеля"""
         pass
-    
+
     @abstractmethod
     async def delete_portfolio_item(self, portfolio_item_id: int) -> bool:
         """Удалить элемент из портфеля"""

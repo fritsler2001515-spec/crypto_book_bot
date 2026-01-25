@@ -229,20 +229,20 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Проверяем, существует ли колонка transaction_type
         try:
             # Пытаемся выполнить запрос с transaction_type
-            result = await self.session.execute(
-                select(CoinTransaction).where(CoinTransaction.user_id == user_id)
-                .order_by(CoinTransaction.timestamp.desc())
-            )
-            transactions = result.scalars().all()
-            return [
-                TransactionEntity(
-                    id=tx.id,
-                    user_id=tx.user_id,
-                    symbol=tx.symbol,
-                    name=tx.name,
-                    quantity=tx.quantity,
-                    price=tx.price,
-                    total_spent=tx.total_spent,
+        result = await self.session.execute(
+            select(CoinTransaction).where(CoinTransaction.user_id == user_id)
+            .order_by(CoinTransaction.timestamp.desc())
+        )
+        transactions = result.scalars().all()
+        return [
+            TransactionEntity(
+                id=tx.id,
+                user_id=tx.user_id,
+                symbol=tx.symbol,
+                name=tx.name,
+                quantity=tx.quantity,
+                price=tx.price,
+                total_spent=tx.total_spent,
                     transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == "SELL") else TransactionType.BUY,
                     timestamp=tx.timestamp
                 )
@@ -270,9 +270,9 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                         price=tx.price,
                         total_spent=tx.total_spent,
                         transaction_type=TransactionType.BUY,  # Все старые транзакции считаем покупками
-                        timestamp=tx.timestamp
-                    )
-                    for tx in transactions
-                ]
+                timestamp=tx.timestamp
+            )
+            for tx in transactions
+        ] 
             else:
                 raise 
