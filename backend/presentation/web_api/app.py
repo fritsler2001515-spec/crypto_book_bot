@@ -9,7 +9,8 @@ from infrastructure.database.connection import get_async_session
 from infrastructure.database.repositories import (
     SQLAlchemyUserRepository,
     SQLAlchemyPortfolioRepository,
-    SQLAlchemyTransactionRepository
+    SQLAlchemyTransactionRepository,
+    SQLAlchemyCoinCacheRepository
 )
 from domain.use_cases.portfolio_use_cases import GetUserPortfolioUseCase, AddCoinToPortfolioUseCase, SellCoinFromPortfolioUseCase
 from domain.entities.user import UserPortfolio, CoinTransaction, TransactionType
@@ -325,6 +326,9 @@ async def get_portfolio_repository(session: AsyncSession = Depends(get_async_ses
 async def get_transaction_repository(session: AsyncSession = Depends(get_async_session)):
     return SQLAlchemyTransactionRepository(session)
 
+async def get_coin_cache_repository(session: AsyncSession = Depends(get_async_session)):
+    return SQLAlchemyCoinCacheRepository(session)
+
 # API Endpoints
 @api_router.get("/users/{telegram_id}", response_model=UserResponse)
 async def get_user(
@@ -525,8 +529,12 @@ async def get_transactions(
         raise HTTPException(status_code=500, detail=f"Ошибка при получении транзакций: {str(e)}")
 
 @api_router.get("/market/top-coins", response_model=List[CoinDataResponse])
-async def get_top_coins(limit: int = 100, response: Response = None):
-    """Получить топ монет по рыночной капитализации"""
+async def get_top_coins(
+    limit: int = 100, 
+    response: Response = None,
+    cache_repo: SQLAlchemyCoinCacheRepository = Depends(get_coin_cache_repository)
+):
+    """Получить топ монет по рыночной капитализации (с кэшированием)"""
     
     # Добавляем CORS заголовки
     if response:
@@ -535,14 +543,62 @@ async def get_top_coins(limit: int = 100, response: Response = None):
         response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
+        # Проверяем, актуален ли кэш (обновляем каждые 5 минут)
+        is_fresh = await cache_repo.is_cache_fresh('top_coins', max_age_minutes=5)
+        
+        if is_fresh:
+            print("📦 Используем кэшированные данные топ монет")
+            cached_coins = await cache_repo.get_cached_coins('top_coins', limit)
+            if cached_coins:
+                return [
+                    CoinDataResponse(
+                        id=coin['id'],
+                        symbol=coin['symbol'],
+                        name=coin['name'],
+                        current_price=coin['current_price'],
+                        market_cap=coin['market_cap'],
+                        market_cap_rank=coin['market_cap_rank'],
+                        price_change_percentage_24h=coin['price_change_percentage_24h'],
+                        image=coin['image'],
+                        total_volume=coin['total_volume']
+                    )
+                    for coin in cached_coins
+                ]
+        
+        # Если кэш устарел, обновляем данные из API
+        print("🔄 Обновляем кэш топ монет из API")
         import asyncio
-        # Добавляем timeout для предотвращения зависания
         async with CoinGeckoAPI() as api:
             coins = await asyncio.wait_for(
                 api.get_top_coins(limit),
-                timeout=10.0  # 10 секунд timeout
+                timeout=15.0  # 15 секунд timeout
             )
+            
             if coins:
+                # Сохраняем в кэш
+                await cache_repo.update_cache(coins, 'top_coins')
+                print("✅ Кэш топ монет обновлен")
+                
+                return [
+                    CoinDataResponse(
+                        id=coin['id'],
+                        symbol=coin['symbol'],
+                        name=coin['name'],
+                        current_price=coin['current_price'],
+                        market_cap=coin['market_cap'],
+                        market_cap_rank=coin['market_cap_rank'],
+                        price_change_percentage_24h=coin['price_change_percentage_24h'],
+                        image=coin['image'],
+                        total_volume=coin['total_volume']
+                    )
+                    for coin in coins
+                ]
+    
+    except asyncio.TimeoutError:
+        print("⏱️ Timeout при получении топ монет из API, пытаемся вернуть устаревший кэш")
+        # Если API не отвечает, возвращаем устаревший кэш
+        cached_coins = await cache_repo.get_cached_coins('top_coins', limit)
+        if cached_coins:
             return [
                 CoinDataResponse(
                     id=coin['id'],
@@ -555,14 +611,32 @@ async def get_top_coins(limit: int = 100, response: Response = None):
                     image=coin['image'],
                     total_volume=coin['total_volume']
                 )
-                for coin in coins
+                for coin in cached_coins
             ]
-    except asyncio.TimeoutError:
-        print("Timeout при получении топ монет")
     except Exception as e:
-        print(f"Ошибка при получении топ монет: {e}")
+        print(f"❌ Ошибка при получении топ монет: {e}")
+        # В случае ошибки пытаемся вернуть кэш
+        try:
+            cached_coins = await cache_repo.get_cached_coins('top_coins', limit)
+            if cached_coins:
+                return [
+                    CoinDataResponse(
+                        id=coin['id'],
+                        symbol=coin['symbol'],
+                        name=coin['name'],
+                        current_price=coin['current_price'],
+                        market_cap=coin['market_cap'],
+                        market_cap_rank=coin['market_cap_rank'],
+                        price_change_percentage_24h=coin['price_change_percentage_24h'],
+                        image=coin['image'],
+                        total_volume=coin['total_volume']
+                    )
+                    for coin in cached_coins
+                ]
+        except:
+            pass
     
-    # Fallback: возвращаем тестовые данные если API недоступен
+    # Последний fallback: возвращаем минимальные тестовые данные
     return [
         CoinDataResponse(
             id="bitcoin",
@@ -589,8 +663,12 @@ async def get_top_coins(limit: int = 100, response: Response = None):
     ][:limit]
 
 @api_router.get("/market/growth-leaders", response_model=List[CoinDataResponse])
-async def get_growth_leaders(limit: int = 5, response: Response = None):
-    """Получить лидеров роста за 24 часа"""
+async def get_growth_leaders(
+    limit: int = 5, 
+    response: Response = None,
+    cache_repo: SQLAlchemyCoinCacheRepository = Depends(get_coin_cache_repository)
+):
+    """Получить лидеров роста за 24 часа (с кэшированием)"""
     
     # Добавляем CORS заголовки
     if response:
@@ -599,14 +677,61 @@ async def get_growth_leaders(limit: int = 5, response: Response = None):
         response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
+        # Проверяем, актуален ли кэш (обновляем каждые 10 минут)
+        is_fresh = await cache_repo.is_cache_fresh('growth_leaders', max_age_minutes=10)
+        
+        if is_fresh:
+            print("📦 Используем кэшированные данные лидеров роста")
+            cached_coins = await cache_repo.get_cached_coins('growth_leaders', limit)
+            if cached_coins:
+                return [
+                    CoinDataResponse(
+                        id=coin['id'],
+                        symbol=coin['symbol'],
+                        name=coin['name'],
+                        current_price=coin['current_price'],
+                        market_cap=coin['market_cap'],
+                        market_cap_rank=coin['market_cap_rank'],
+                        price_change_percentage_24h=coin['price_change_percentage_24h'],
+                        image=coin['image'],
+                        total_volume=coin['total_volume']
+                    )
+                    for coin in cached_coins
+                ]
+        
+        # Если кэш устарел, обновляем данные из API
+        print("🔄 Обновляем кэш лидеров роста из API")
         import asyncio
-        # Добавляем timeout для предотвращения зависания
         async with CoinGeckoAPI() as api:
             coins = await asyncio.wait_for(
                 api.get_growth_leaders(limit),
-                timeout=15.0  # Увеличиваем timeout до 15 секунд
+                timeout=15.0
             )
+            
             if coins:
+                # Сохраняем в кэш
+                await cache_repo.update_cache(coins, 'growth_leaders')
+                print("✅ Кэш лидеров роста обновлен")
+                
+                return [
+                    CoinDataResponse(
+                        id=coin['id'],
+                        symbol=coin['symbol'],
+                        name=coin['name'],
+                        current_price=coin['current_price'],
+                        market_cap=coin['market_cap'],
+                        market_cap_rank=coin['market_cap_rank'],
+                        price_change_percentage_24h=coin['price_change_percentage_24h'],
+                        image=coin['image'],
+                        total_volume=coin['total_volume']
+                    )
+                    for coin in coins
+                ]
+    
+    except asyncio.TimeoutError:
+        print("⏱️ Timeout при получении лидеров роста из API")
+        cached_coins = await cache_repo.get_cached_coins('growth_leaders', limit)
+        if cached_coins:
             return [
                 CoinDataResponse(
                     id=coin['id'],
@@ -619,14 +744,31 @@ async def get_growth_leaders(limit: int = 5, response: Response = None):
                     image=coin['image'],
                     total_volume=coin['total_volume']
                 )
-                for coin in coins
+                for coin in cached_coins
             ]
-    except asyncio.TimeoutError:
-        print("Timeout при получении лидеров роста")
     except Exception as e:
-        print(f"Ошибка при получении лидеров роста: {e}")
+        print(f"❌ Ошибка при получении лидеров роста: {e}")
+        try:
+            cached_coins = await cache_repo.get_cached_coins('growth_leaders', limit)
+            if cached_coins:
+                return [
+                    CoinDataResponse(
+                        id=coin['id'],
+                        symbol=coin['symbol'],
+                        name=coin['name'],
+                        current_price=coin['current_price'],
+                        market_cap=coin['market_cap'],
+                        market_cap_rank=coin['market_cap_rank'],
+                        price_change_percentage_24h=coin['price_change_percentage_24h'],
+                        image=coin['image'],
+                        total_volume=coin['total_volume']
+                    )
+                    for coin in cached_coins
+                ]
+        except:
+            pass
     
-    # Fallback: возвращаем реальных лидеров роста
+    # Fallback: возвращаем статичные данные
     return [
         CoinDataResponse(
             id="solana",
@@ -708,6 +850,58 @@ async def get_current_prices(coin_names: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при получении цен: {str(e)}")
+
+@api_router.post("/admin/refresh-coin-cache")
+async def refresh_coin_cache(
+    cache_repo: SQLAlchemyCoinCacheRepository = Depends(get_coin_cache_repository)
+):
+    """Принудительно обновить кэш монет из API (админ endpoint)"""
+    try:
+        import asyncio
+        
+        results = {
+            "top_coins": False,
+            "growth_leaders": False,
+            "errors": []
+        }
+        
+        # Обновляем топ монеты
+        try:
+            print("🔄 Обновляем кэш топ монет...")
+            async with CoinGeckoAPI() as api:
+                coins = await asyncio.wait_for(api.get_top_coins(100), timeout=20.0)
+                if coins:
+                    await cache_repo.update_cache(coins, 'top_coins')
+                    results["top_coins"] = True
+                    print("✅ Кэш топ монет обновлен")
+        except Exception as e:
+            error_msg = f"Ошибка при обновлении топ монет: {str(e)}"
+            print(f"❌ {error_msg}")
+            results["errors"].append(error_msg)
+        
+        # Обновляем лидеров роста
+        try:
+            print("🔄 Обновляем кэш лидеров роста...")
+            async with CoinGeckoAPI() as api:
+                coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=20.0)
+                if coins:
+                    await cache_repo.update_cache(coins, 'growth_leaders')
+                    results["growth_leaders"] = True
+                    print("✅ Кэш лидеров роста обновлен")
+        except Exception as e:
+            error_msg = f"Ошибка при обновлении лидеров роста: {str(e)}"
+            print(f"❌ {error_msg}")
+            results["errors"].append(error_msg)
+        
+        return {
+            "status": "completed",
+            "results": results,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"❌ Критическая ошибка при обновлении кэша: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при обновлении кэша: {str(e)}")
 
 
  

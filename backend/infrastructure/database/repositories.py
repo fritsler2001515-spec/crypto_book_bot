@@ -6,7 +6,7 @@ from datetime import datetime
 
 from domain.entities.user import User as UserEntity, UserPortfolio as PortfolioEntity, CoinTransaction as TransactionEntity, TransactionType
 from domain.repositories.user_repository import UserRepository, PortfolioRepository, TransactionRepository
-from .models import User, UserPortfolio, CoinTransaction, TransactionType as DBTransactionType
+from .models import User, UserPortfolio, CoinTransaction, TransactionType as DBTransactionType, CoinCache
 
 class SQLAlchemyUserRepository(UserRepository):
     def __init__(self, session: AsyncSession):
@@ -229,20 +229,20 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
         # Проверяем, существует ли колонка transaction_type
         try:
             # Пытаемся выполнить запрос с transaction_type
-        result = await self.session.execute(
-            select(CoinTransaction).where(CoinTransaction.user_id == user_id)
-            .order_by(CoinTransaction.timestamp.desc())
-        )
-        transactions = result.scalars().all()
-        return [
-            TransactionEntity(
-                id=tx.id,
-                user_id=tx.user_id,
-                symbol=tx.symbol,
-                name=tx.name,
-                quantity=tx.quantity,
-                price=tx.price,
-                total_spent=tx.total_spent,
+            result = await self.session.execute(
+                select(CoinTransaction).where(CoinTransaction.user_id == user_id)
+                .order_by(CoinTransaction.timestamp.desc())
+            )
+            transactions = result.scalars().all()
+            return [
+                TransactionEntity(
+                    id=tx.id,
+                    user_id=tx.user_id,
+                    symbol=tx.symbol,
+                    name=tx.name,
+                    quantity=tx.quantity,
+                    price=tx.price,
+                    total_spent=tx.total_spent,
                     transaction_type=TransactionType.SELL if (hasattr(tx, 'transaction_type') and tx.transaction_type == "SELL") else TransactionType.BUY,
                     timestamp=tx.timestamp
                 )
@@ -270,9 +270,88 @@ class SQLAlchemyTransactionRepository(TransactionRepository):
                         price=tx.price,
                         total_spent=tx.total_spent,
                         transaction_type=TransactionType.BUY,  # Все старые транзакции считаем покупками
-                timestamp=tx.timestamp
-            )
-            for tx in transactions
-        ] 
+                        timestamp=tx.timestamp
+                    )
+                    for tx in transactions
+                ] 
             else:
-                raise 
+                raise
+
+
+class SQLAlchemyCoinCacheRepository:
+    """Репозиторий для работы с кэшем монет"""
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+    
+    async def get_cached_coins(self, cache_type: str = 'top_coins', limit: int = 100) -> List[dict]:
+        """Получить кэшированные монеты"""
+        result = await self.session.execute(
+            select(CoinCache)
+            .where(CoinCache.cache_type == cache_type)
+            .order_by(CoinCache.market_cap_rank)
+            .limit(limit)
+        )
+        coins = result.scalars().all()
+        return [
+            {
+                'id': coin.id,
+                'symbol': coin.symbol.upper(),
+                'name': coin.name,
+                'current_price': coin.current_price,
+                'market_cap': coin.market_cap,
+                'market_cap_rank': coin.market_cap_rank,
+                'price_change_percentage_24h': coin.price_change_percentage_24h,
+                'image': coin.image,
+                'total_volume': coin.total_volume
+            }
+            for coin in coins
+        ]
+    
+    async def update_cache(self, coins_data: List[dict], cache_type: str = 'top_coins'):
+        """Обновить кэш монет"""
+        # Сначала удаляем старые данные для этого типа
+        await self.session.execute(
+            select(CoinCache).where(CoinCache.cache_type == cache_type)
+        )
+        existing_coins = (await self.session.execute(
+            select(CoinCache).where(CoinCache.cache_type == cache_type)
+        )).scalars().all()
+        
+        for coin in existing_coins:
+            await self.session.delete(coin)
+        
+        # Добавляем новые данные
+        for coin_data in coins_data:
+            cache_coin = CoinCache(
+                id=coin_data['id'],
+                symbol=coin_data['symbol'],
+                name=coin_data['name'],
+                current_price=coin_data['current_price'],
+                market_cap=coin_data.get('market_cap'),
+                market_cap_rank=coin_data.get('market_cap_rank'),
+                price_change_percentage_24h=coin_data.get('price_change_percentage_24h'),
+                image=coin_data.get('image'),
+                total_volume=coin_data.get('total_volume'),
+                cache_type=cache_type,
+                last_updated=datetime.utcnow()
+            )
+            self.session.add(cache_coin)
+        
+        await self.session.commit()
+    
+    async def is_cache_fresh(self, cache_type: str = 'top_coins', max_age_minutes: int = 5) -> bool:
+        """Проверить, актуален ли кэш"""
+        result = await self.session.execute(
+            select(CoinCache)
+            .where(CoinCache.cache_type == cache_type)
+            .limit(1)
+        )
+        coin = result.scalar_one_or_none()
+        
+        if not coin:
+            return False
+        
+        from datetime import timedelta
+        age = datetime.utcnow() - coin.last_updated
+        return age < timedelta(minutes=max_age_minutes) 
