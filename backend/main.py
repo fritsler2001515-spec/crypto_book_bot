@@ -24,36 +24,56 @@ async def initialize_coin_cache():
         async with AsyncSessionLocal() as session:
             cache_repo = SQLAlchemyCoinCacheRepository(session)
             
-            # Проверяем, есть ли кэш
-            is_fresh = await cache_repo.is_cache_fresh('top_coins', max_age_minutes=60)
+            # Проверяем, есть ли кэш (проверяем за последние 24 часа)
+            is_fresh = await cache_repo.is_cache_fresh('top_coins', max_age_minutes=1440)  # 24 часа
             
             if not is_fresh:
                 print("🔄 Инициализация кэша топ монет...")
-                try:
-                    async with CoinGeckoAPI() as api:
-                        coins = await asyncio.wait_for(api.get_top_coins(100), timeout=20.0)
-                        if coins:
-                            await cache_repo.update_cache(coins, 'top_coins')
-                            print(f"✅ Кэш топ монет инициализирован ({len(coins)} монет)")
-                        else:
-                            print("⚠️ Не удалось получить данные от CoinGecko API")
-                except asyncio.TimeoutError:
-                    print("⏱️ Timeout при инициализации кэша топ монет")
-                except Exception as e:
-                    print(f"❌ Ошибка при инициализации кэша топ монет: {e}")
+                
+                # Пробуем с retry (до 3 попыток)
+                for attempt in range(3):
+                    try:
+                        if attempt > 0:
+                            delay = 10 * (attempt + 1)  # 10, 20, 30 секунд
+                            print(f"⏳ Ожидание {delay} секунд перед повторной попыткой...")
+                            await asyncio.sleep(delay)
+                        
+                        async with CoinGeckoAPI() as api:
+                            coins = await asyncio.wait_for(api.get_top_coins(100), timeout=30.0)
+                            if coins:
+                                await cache_repo.update_cache(coins, 'top_coins')
+                                print(f"✅ Кэш топ монет инициализирован ({len(coins)} монет)")
+                                break
+                            else:
+                                print(f"⚠️ Попытка {attempt + 1}/3: Пустой ответ от API")
+                    except asyncio.TimeoutError:
+                        print(f"⏱️ Попытка {attempt + 1}/3: Timeout")
+                    except Exception as e:
+                        print(f"❌ Попытка {attempt + 1}/3: Ошибка - {e}")
+                        if "429" in str(e) or "rate limit" in str(e).lower():
+                            print("⚠️ Rate limit достигнут, используем fallback данные")
+                            break
+                
+                # Задержка перед следующим запросом
+                await asyncio.sleep(15)
                 
                 # Инициализация лидеров роста
                 print("🔄 Инициализация кэша лидеров роста...")
-                try:
-                    async with CoinGeckoAPI() as api:
-                        coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=20.0)
-                        if coins:
-                            await cache_repo.update_cache(coins, 'growth_leaders')
-                            print(f"✅ Кэш лидеров роста инициализирован ({len(coins)} монет)")
-                except asyncio.TimeoutError:
-                    print("⏱️ Timeout при инициализации кэша лидеров роста")
-                except Exception as e:
-                    print(f"❌ Ошибка при инициализации кэша лидеров роста: {e}")
+                for attempt in range(2):  # Только 2 попытки для лидеров роста
+                    try:
+                        if attempt > 0:
+                            await asyncio.sleep(15)
+                        
+                        async with CoinGeckoAPI() as api:
+                            coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=30.0)
+                            if coins:
+                                await cache_repo.update_cache(coins, 'growth_leaders')
+                                print(f"✅ Кэш лидеров роста инициализирован ({len(coins)} монет)")
+                                break
+                    except Exception as e:
+                        print(f"❌ Попытка {attempt + 1}/2: {e}")
+                        if "429" in str(e):
+                            break
             else:
                 print("✅ Кэш монет уже актуален")
                 

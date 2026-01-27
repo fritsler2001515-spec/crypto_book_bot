@@ -71,15 +71,17 @@ class CoinGeckoAPI:
     async def _fetch_coins_data(self, session: aiohttp.ClientSession, url: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Получить данные о монетах"""
         try:
+            # Задержка перед запросом для избежания rate limit
+            await asyncio.sleep(2)
+            
             print(f"🌐 Запрос к CoinGecko API: {url}")
             print(f"📊 Параметры: {params}")
             
-            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=20)) as response:
                 print(f"📡 Получен ответ: HTTP {response.status}")
                 
                 if response.status == 429:
-                    print("⚠️ Rate limit превышен. Ожидание 10 секунд...")
-                    await asyncio.sleep(10)
+                    print("⚠️ Rate limit превышен. Используем fallback данные")
                     return []
                 elif response.status != 200:
                     error_text = await response.text()
@@ -345,15 +347,17 @@ class CoinGeckoAPI:
     async def _fetch_growth_leaders_data(self, session: aiohttp.ClientSession, url: str, params: Dict[str, Any], limit: int) -> List[Dict[str, Any]]:
         """Получить данные лидеров роста с фильтрацией"""
         try:
+            # Задержка перед запросом для избежания rate limit
+            await asyncio.sleep(2)
+            
             print(f"🌐 Запрос лидеров роста к CoinGecko API: {url}")
             print(f"📊 Параметры: {params}")
             
-            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
+            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=20)) as response:
                 print(f"📡 Получен ответ: HTTP {response.status}")
                 
                 if response.status == 429:
-                    print("⚠️ Rate limit превышен. Ожидание 10 секунд...")
-                    await asyncio.sleep(10)
+                    print("⚠️ Rate limit превышен. Используем fallback данные")
                     return []
                 elif response.status != 200:
                     error_text = await response.text()

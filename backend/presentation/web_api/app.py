@@ -543,8 +543,8 @@ async def get_top_coins(
         response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
-        # Проверяем, актуален ли кэш (обновляем каждые 5 минут)
-        is_fresh = await cache_repo.is_cache_fresh('top_coins', max_age_minutes=5)
+        # Проверяем, актуален ли кэш (обновляем каждые 30 минут для избежания rate limit)
+        is_fresh = await cache_repo.is_cache_fresh('top_coins', max_age_minutes=30)
         
         print(f"🔍 Проверка кэша топ монет: свежий={is_fresh}")
         
@@ -683,8 +683,8 @@ async def get_growth_leaders(
         response.headers["Access-Control-Allow-Headers"] = "*"
     
     try:
-        # Проверяем, актуален ли кэш (обновляем каждые 10 минут)
-        is_fresh = await cache_repo.is_cache_fresh('growth_leaders', max_age_minutes=10)
+        # Проверяем, актуален ли кэш (обновляем каждые 30 минут для избежания rate limit)
+        is_fresh = await cache_repo.is_cache_fresh('growth_leaders', max_age_minutes=30)
         
         if is_fresh:
             print("📦 Используем кэшированные данные лидеров роста")
