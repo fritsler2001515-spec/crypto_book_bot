@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     
     # External APIs
     COINGECKO_API_URL: str = "https://api.coingecko.com/api/v3"
+    COINMARKETCAP_API_KEY: str = os.getenv("COINMARKETCAP_API_KEY", "")
     
     class Config:
         env_file = ".env"

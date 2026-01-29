@@ -15,6 +15,8 @@ from infrastructure.database.repositories import (
 from domain.use_cases.portfolio_use_cases import GetUserPortfolioUseCase, AddCoinToPortfolioUseCase, SellCoinFromPortfolioUseCase
 from domain.entities.user import UserPortfolio, CoinTransaction, TransactionType
 from infrastructure.external_apis.coin_gecko_api import CoinGeckoAPI
+from infrastructure.external_apis.coinmarketcap_api import CoinMarketCapAPI
+from shared.config import settings
 from shared.types.api_schemas import (
     PortfolioResponse,
     PortfolioItemResponse,
@@ -574,11 +576,28 @@ async def get_top_coins(
         # Если кэш устарел, обновляем данные из API
         print("🔄 Обновляем кэш топ монет из API")
         import asyncio
-        async with CoinGeckoAPI() as api:
-            coins = await asyncio.wait_for(
-                api.get_top_coins(limit),
-                timeout=15.0  # 15 секунд timeout
-            )
+        
+        # Пробуем CoinMarketCap сначала
+        coins = None
+        if settings.COINMARKETCAP_API_KEY:
+            try:
+                print("💎 Используем CoinMarketCap API")
+                async with CoinMarketCapAPI(settings.COINMARKETCAP_API_KEY) as api:
+                    coins = await asyncio.wait_for(
+                        api.get_top_coins(limit),
+                        timeout=20.0
+                    )
+            except Exception as e:
+                print(f"❌ Ошибка CoinMarketCap API: {e}, переключаемся на CoinGecko")
+        
+        # Fallback на CoinGecko
+        if not coins:
+            print("🔄 Используем CoinGecko API")
+            async with CoinGeckoAPI() as api:
+                coins = await asyncio.wait_for(
+                    api.get_top_coins(limit),
+                    timeout=15.0
+                )
             
             if coins:
                 # Сохраняем в кэш
@@ -708,11 +727,28 @@ async def get_growth_leaders(
         # Если кэш устарел, обновляем данные из API
         print("🔄 Обновляем кэш лидеров роста из API")
         import asyncio
-        async with CoinGeckoAPI() as api:
-            coins = await asyncio.wait_for(
-                api.get_growth_leaders(limit),
-                timeout=15.0
-            )
+        
+        # Пробуем CoinMarketCap сначала
+        coins = None
+        if settings.COINMARKETCAP_API_KEY:
+            try:
+                print("💎 Используем CoinMarketCap API")
+                async with CoinMarketCapAPI(settings.COINMARKETCAP_API_KEY) as api:
+                    coins = await asyncio.wait_for(
+                        api.get_growth_leaders(limit),
+                        timeout=20.0
+                    )
+            except Exception as e:
+                print(f"❌ Ошибка CoinMarketCap API: {e}, переключаемся на CoinGecko")
+        
+        # Fallback на CoinGecko
+        if not coins:
+            print("🔄 Используем CoinGecko API")
+            async with CoinGeckoAPI() as api:
+                coins = await asyncio.wait_for(
+                    api.get_growth_leaders(limit),
+                    timeout=15.0
+                )
             
             if coins:
                 # Сохраняем в кэш
@@ -874,12 +910,25 @@ async def refresh_coin_cache(
         # Обновляем топ монеты
         try:
             print("🔄 Обновляем кэш топ монет...")
-            async with CoinGeckoAPI() as api:
-                coins = await asyncio.wait_for(api.get_top_coins(100), timeout=20.0)
-                if coins:
-                    await cache_repo.update_cache(coins, 'top_coins')
-                    results["top_coins"] = True
-                    print("✅ Кэш топ монет обновлен")
+            coins = None
+            
+            # Пробуем CoinMarketCap
+            if settings.COINMARKETCAP_API_KEY:
+                try:
+                    async with CoinMarketCapAPI(settings.COINMARKETCAP_API_KEY) as api:
+                        coins = await asyncio.wait_for(api.get_top_coins(100), timeout=20.0)
+                except Exception as cmc_error:
+                    print(f"⚠️ CoinMarketCap не сработал: {cmc_error}")
+            
+            # Fallback на CoinGecko
+            if not coins:
+                async with CoinGeckoAPI() as api:
+                    coins = await asyncio.wait_for(api.get_top_coins(100), timeout=20.0)
+            
+            if coins:
+                await cache_repo.update_cache(coins, 'top_coins')
+                results["top_coins"] = True
+                print("✅ Кэш топ монет обновлен")
         except Exception as e:
             error_msg = f"Ошибка при обновлении топ монет: {str(e)}"
             print(f"❌ {error_msg}")
@@ -888,12 +937,25 @@ async def refresh_coin_cache(
         # Обновляем лидеров роста
         try:
             print("🔄 Обновляем кэш лидеров роста...")
-            async with CoinGeckoAPI() as api:
-                coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=20.0)
-                if coins:
-                    await cache_repo.update_cache(coins, 'growth_leaders')
-                    results["growth_leaders"] = True
-                    print("✅ Кэш лидеров роста обновлен")
+            coins = None
+            
+            # Пробуем CoinMarketCap
+            if settings.COINMARKETCAP_API_KEY:
+                try:
+                    async with CoinMarketCapAPI(settings.COINMARKETCAP_API_KEY) as api:
+                        coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=20.0)
+                except Exception as cmc_error:
+                    print(f"⚠️ CoinMarketCap не сработал: {cmc_error}")
+            
+            # Fallback на CoinGecko
+            if not coins:
+                async with CoinGeckoAPI() as api:
+                    coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=20.0)
+            
+            if coins:
+                await cache_repo.update_cache(coins, 'growth_leaders')
+                results["growth_leaders"] = True
+                print("✅ Кэш лидеров роста обновлен")
         except Exception as e:
             error_msg = f"Ошибка при обновлении лидеров роста: {str(e)}"
             print(f"❌ {error_msg}")

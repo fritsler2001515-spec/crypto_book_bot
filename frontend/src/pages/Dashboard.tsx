@@ -61,31 +61,32 @@ const Dashboard: React.FC = () => {
     fetchData();
   }, [retryCount]);
 
-  useEffect(() => {
-    const fetchMarketData = async () => {
-      try {
-        setMarketLoading(true);
-        setMarketError(null);
-        
-        // Получаем данные параллельно
-        const [leaders, top] = await Promise.all([
-          apiService.getGrowthLeaders(5),
-          apiService.getTopCoins(100)
-        ]);
-        
-        setGrowthLeaders(leaders);
-        setTopCoins(top);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Ошибка при загрузке рыночных данных';
-        setMarketError(errorMessage);
-        console.error('Market data error:', err);
-      } finally {
-        setMarketLoading(false);
-      }
-    };
-
-    fetchMarketData();
-  }, []);
+  // Временно отключено для экономии API запросов
+  // useEffect(() => {
+  //   const fetchMarketData = async () => {
+  //     try {
+  //       setMarketLoading(true);
+  //       setMarketError(null);
+  //       
+  //       // Получаем данные параллельно
+  //       const [leaders, top] = await Promise.all([
+  //         apiService.getGrowthLeaders(5),
+  //         apiService.getTopCoins(100)
+  //       ]);
+  //       
+  //       setGrowthLeaders(leaders);
+  //       setTopCoins(top);
+  //     } catch (err) {
+  //       const errorMessage = err instanceof Error ? err.message : 'Ошибка при загрузке рыночных данных';
+  //       setMarketError(errorMessage);
+  //       console.error('Market data error:', err);
+  //     } finally {
+  //       setMarketLoading(false);
+  //     }
+  //   };
+  //
+  //   fetchMarketData();
+  // }, []);
 
   // Расчет показателей портфеля
   const totalSpent = portfolio?.portfolio.reduce((sum, item) => sum + (Number(item.total_spent) || 0), 0) || 0;
@@ -157,24 +158,22 @@ const Dashboard: React.FC = () => {
     <Box>
 
 
-      {/* Рыночные данные */}
-      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+      {/* Рыночные данные - временно отключено для экономии API запросов */}
+      {/* <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
         📈 Рыночные данные
       </Typography>
       
-      {/* Лидеры роста */}
       <GrowthLeaders 
         coins={growthLeaders}
         loading={marketLoading}
         error={marketError}
       />
       
-      {/* Топ монет */}
       <TopCoins 
         coins={topCoins}
         loading={marketLoading}
         error={marketError}
-      />
+      /> */}
 
       {/* Быстрые действия */}
       <Typography variant="h5" gutterBottom sx={{ mb: 3, mt: 4 }}>

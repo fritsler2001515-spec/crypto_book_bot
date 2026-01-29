@@ -19,6 +19,7 @@ async def initialize_coin_cache():
     try:
         from infrastructure.database.connection import AsyncSessionLocal
         from infrastructure.database.repositories import SQLAlchemyCoinCacheRepository
+        from infrastructure.external_apis.coinmarketcap_api import CoinMarketCapAPI
         from infrastructure.external_apis.coin_gecko_api import CoinGeckoAPI
         
         async with AsyncSessionLocal() as session:
@@ -30,50 +31,68 @@ async def initialize_coin_cache():
             if not is_fresh:
                 print("🔄 Инициализация кэша топ монет...")
                 
-                # Пробуем с retry (до 3 попыток)
-                for attempt in range(3):
+                # Выбираем API: CoinMarketCap (приоритет) или CoinGecko (fallback)
+                use_coinmarketcap = bool(settings.COINMARKETCAP_API_KEY)
+                
+                if use_coinmarketcap:
+                    print("💎 Используем CoinMarketCap API")
                     try:
-                        if attempt > 0:
-                            delay = 10 * (attempt + 1)  # 10, 20, 30 секунд
-                            print(f"⏳ Ожидание {delay} секунд перед повторной попыткой...")
-                            await asyncio.sleep(delay)
-                        
-                        async with CoinGeckoAPI() as api:
+                        async with CoinMarketCapAPI(settings.COINMARKETCAP_API_KEY) as api:
                             coins = await asyncio.wait_for(api.get_top_coins(100), timeout=30.0)
                             if coins:
                                 await cache_repo.update_cache(coins, 'top_coins')
                                 print(f"✅ Кэш топ монет инициализирован ({len(coins)} монет)")
-                                break
                             else:
-                                print(f"⚠️ Попытка {attempt + 1}/3: Пустой ответ от API")
-                    except asyncio.TimeoutError:
-                        print(f"⏱️ Попытка {attempt + 1}/3: Timeout")
+                                print("⚠️ Пустой ответ от CoinMarketCap API")
+                                use_coinmarketcap = False  # Fallback на CoinGecko
                     except Exception as e:
-                        print(f"❌ Попытка {attempt + 1}/3: Ошибка - {e}")
-                        if "429" in str(e) or "rate limit" in str(e).lower():
-                            print("⚠️ Rate limit достигнут, используем fallback данные")
-                            break
+                        print(f"❌ Ошибка CoinMarketCap API: {e}")
+                        use_coinmarketcap = False  # Fallback на CoinGecko
                 
-                # Задержка перед следующим запросом
-                await asyncio.sleep(15)
+                # Fallback на CoinGecko если CoinMarketCap не сработал
+                if not use_coinmarketcap:
+                    print("🔄 Fallback на CoinGecko API")
+                    for attempt in range(3):
+                        try:
+                            if attempt > 0:
+                                delay = 10 * (attempt + 1)
+                                print(f"⏳ Ожидание {delay} секунд...")
+                                await asyncio.sleep(delay)
+                            
+                            async with CoinGeckoAPI() as api:
+                                coins = await asyncio.wait_for(api.get_top_coins(100), timeout=30.0)
+                                if coins:
+                                    await cache_repo.update_cache(coins, 'top_coins')
+                                    print(f"✅ Кэш топ монет инициализирован ({len(coins)} монет)")
+                                    break
+                        except Exception as e:
+                            print(f"❌ Попытка {attempt + 1}/3: {e}")
+                            if "429" in str(e):
+                                break
                 
                 # Инициализация лидеров роста
+                await asyncio.sleep(3)  # Небольшая задержка
                 print("🔄 Инициализация кэша лидеров роста...")
-                for attempt in range(2):  # Только 2 попытки для лидеров роста
+                
+                if settings.COINMARKETCAP_API_KEY:
                     try:
-                        if attempt > 0:
-                            await asyncio.sleep(15)
-                        
+                        async with CoinMarketCapAPI(settings.COINMARKETCAP_API_KEY) as api:
+                            coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=30.0)
+                            if coins:
+                                await cache_repo.update_cache(coins, 'growth_leaders')
+                                print(f"✅ Кэш лидеров роста инициализирован ({len(coins)} монет)")
+                    except Exception as e:
+                        print(f"❌ Ошибка при инициализации лидеров роста: {e}")
+                else:
+                    # Fallback на CoinGecko
+                    try:
                         async with CoinGeckoAPI() as api:
                             coins = await asyncio.wait_for(api.get_growth_leaders(20), timeout=30.0)
                             if coins:
                                 await cache_repo.update_cache(coins, 'growth_leaders')
                                 print(f"✅ Кэш лидеров роста инициализирован ({len(coins)} монет)")
-                                break
                     except Exception as e:
-                        print(f"❌ Попытка {attempt + 1}/2: {e}")
-                        if "429" in str(e):
-                            break
+                        print(f"❌ Ошибка: {e}")
             else:
                 print("✅ Кэш монет уже актуален")
                 
@@ -90,8 +109,9 @@ async def lifespan(app: FastAPI):
     init_db()
     print("✅ База данных инициализирована")
     
-    # Инициализация кэша монет
-    await initialize_coin_cache()
+    # Инициализация кэша монет - временно отключено для экономии API запросов
+    # await initialize_coin_cache()
+    print("ℹ️ Кэш топ монет отключен - используются только индивидуальные цены")
     
     # Создание и настройка бота (только если токен валидный)
     if settings.BOT_TOKEN and settings.BOT_TOKEN != "your_telegram_bot_token_here":
