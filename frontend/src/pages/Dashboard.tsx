@@ -16,18 +16,12 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { Portfolio, CoinData } from '../types';
-import GrowthLeaders from '../components/GrowthLeaders';
-import TopCoins from '../components/TopCoins';
+import { Portfolio } from '../types';
 
 const Dashboard: React.FC = () => {
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
-  const [growthLeaders, setGrowthLeaders] = useState<CoinData[]>([]);
-  const [topCoins, setTopCoins] = useState<CoinData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [marketLoading, setMarketLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [marketError, setMarketError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
 
@@ -62,31 +56,7 @@ const Dashboard: React.FC = () => {
   }, [retryCount]);
 
   // Временно отключено для экономии API запросов
-  // useEffect(() => {
-  //   const fetchMarketData = async () => {
-  //     try {
-  //       setMarketLoading(true);
-  //       setMarketError(null);
-  //       
-  //       // Получаем данные параллельно
-  //       const [leaders, top] = await Promise.all([
-  //         apiService.getGrowthLeaders(5),
-  //         apiService.getTopCoins(100)
-  //       ]);
-  //       
-  //       setGrowthLeaders(leaders);
-  //       setTopCoins(top);
-  //     } catch (err) {
-  //       const errorMessage = err instanceof Error ? err.message : 'Ошибка при загрузке рыночных данных';
-  //       setMarketError(errorMessage);
-  //       console.error('Market data error:', err);
-  //     } finally {
-  //       setMarketLoading(false);
-  //     }
-  //   };
-  //
-  //   fetchMarketData();
-  // }, []);
+  // Топ монеты и лидеры роста не загружаются
 
   // Расчет показателей портфеля
   const totalSpent = portfolio?.portfolio.reduce((sum, item) => sum + (Number(item.total_spent) || 0), 0) || 0;
@@ -96,8 +66,6 @@ const Dashboard: React.FC = () => {
     return sum + (currentPrice * quantity);
   }, 0) || 0;
   const profitLoss = currentValue - totalSpent;
-  const profitLossPercent = totalSpent > 0 ? ((profitLoss / totalSpent) * 100) : 0;
-  const totalCoins = portfolio?.portfolio.length || 0;
 
   const quickActions = [
     {
@@ -157,23 +125,6 @@ const Dashboard: React.FC = () => {
   return (
     <Box>
 
-
-      {/* Рыночные данные - временно отключено для экономии API запросов */}
-      {/* <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-        📈 Рыночные данные
-      </Typography>
-      
-      <GrowthLeaders 
-        coins={growthLeaders}
-        loading={marketLoading}
-        error={marketError}
-      />
-      
-      <TopCoins 
-        coins={topCoins}
-        loading={marketLoading}
-        error={marketError}
-      /> */}
 
       {/* Быстрые действия */}
       <Typography variant="h5" gutterBottom sx={{ mb: 3, mt: 4 }}>
